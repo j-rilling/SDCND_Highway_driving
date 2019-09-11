@@ -1,10 +1,19 @@
-#ifndef PTG_H
-#define PTG_H
+#ifndef _PTG_H_
+#define _PTG_H_
 
 #include <cmath>
 #include <vector>
+#include <map>
+#include "vehicle.h"
+#include "helpers.h"
 
 // This class is responsible of generating polynomial trajectories
+
+struct trajInfo {
+  std::vector<double> s_coeffs;
+  std::vector<double> d_coeffs;
+  double final_time;
+};
 
 class PTG {
   public:
@@ -12,6 +21,15 @@ class PTG {
     ~PTG();
 
     std::vector<double> JMT (std::vector<double> &start, std::vector<double> &end, double T);
+
+    double timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double sDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double dDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
 
   private:
     const double N_SAMPLES = 10;

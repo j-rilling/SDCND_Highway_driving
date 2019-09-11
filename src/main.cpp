@@ -136,21 +136,87 @@ int main_project() {
   h.run();
 }
 
-int main() {
+void tests() {
 
-  std::vector<double> start {5, 10, 2};
-  std::vector<double> end {-30, -20, -4};
+  // TEST: JMT Method of PTG class
+  std::vector<double> start_s {5, 10, 2};
+  std::vector<double> end_s {50, 10, 0};
+  std::vector<double> start_d {0, 0, 0};
+  std::vector<double> end_d {10, 0, 0};
 
   PTG ptg = PTG();
-  double T = 5.0;
-  std::vector<double> coeffs = ptg.JMT(start, end, T);
+  double time_given = 5.0;
+  std::vector<double> coeffs_s = ptg.JMT(start_s, end_s, time_given);
+  std::vector<double> coeffs_d = ptg.JMT(start_d, end_d, time_given);
+  double time_real_traj = 5.0;
 
-  std::cout << "a0: " << coeffs[0] << std::endl;
-  std::cout << "a1: " << coeffs[1] << std::endl;
-  std::cout << "a2: " << coeffs[2] << std::endl;
-  std::cout << "a3: " << coeffs[3] << std::endl;
-  std::cout << "a4: " << coeffs[4] << std::endl;
-  std::cout << "a5: " << coeffs[5] << std::endl;
+  trajInfo test_trajectory {coeffs_s, coeffs_d, time_real_traj};
 
+  std::cout << std::endl << "TEST: JMT Method of PTG class" << std::endl;
+  std::cout << "Trajectory for s " << std::endl;
+  std::cout << "a0: " << coeffs_s[0] << std::endl;
+  std::cout << "a1: " << coeffs_s[1] << std::endl;
+  std::cout << "a2: " << coeffs_s[2] << std::endl;
+  std::cout << "a3: " << coeffs_s[3] << std::endl;
+  std::cout << "a4: " << coeffs_s[4] << std::endl;
+  std::cout << "a5: " << coeffs_s[5] << std::endl;
+  std::cout << std::endl;
+
+  std::cout << "Trajectory for d " << std::endl;
+  std::cout << "a0: " << coeffs_d[0] << std::endl;
+  std::cout << "a1: " << coeffs_d[1] << std::endl;
+  std::cout << "a2: " << coeffs_d[2] << std::endl;
+  std::cout << "a3: " << coeffs_d[3] << std::endl;
+  std::cout << "a4: " << coeffs_d[4] << std::endl;
+  std::cout << "a5: " << coeffs_d[5] << std::endl;
+  std::cout << std::endl;
+  
+  // Test time difference cost function
+  vehicle test_target_car = vehicle({0, 10, 0, 0, 0, 0});
+
+  std::map<int, vehicle> predictions {{0, test_target_car}};
+  int test_target_car_id = 0;
+
+  std::vector<double> delta_car {0,0,0,0,0,0};
+
+  double time_cost = ptg.timeDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+
+    std::cout << std::endl << "TEST: Cost functions" << std::endl;
+  std::cout << "Cost for time difference between " << time_given << "[s] and " << time_real_traj << "[s]: " << time_cost << std::endl;
+
+  // Test s diff cost function
+  double s_diff_cost = ptg.sDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+
+  std::vector<double> test_target_car_sd = test_target_car.stateIn(time_real_traj);
+  std::vector<double> coeffs_ds_dt = differentiate(coeffs_s);
+  std::vector<double> coeffs_d2s_dt2 = differentiate(coeffs_ds_dt);
+  
+  std::cout << "Cost for s difference between (" << test_target_car_sd[0] << "," << 
+                                                    test_target_car_sd[1] << "," << 
+                                                    test_target_car_sd[2] << ") (target car) and (" << 
+                                                    toEquation(coeffs_s, time_real_traj) << "," << 
+                                                    toEquation(coeffs_ds_dt, time_real_traj) << "," << 
+                                                    toEquation(coeffs_d2s_dt2, time_real_traj) << 
+                                                    ") (ego car) is: " << s_diff_cost << std::endl;
+
+  // Test d diff cost function
+  double d_diff_cost = ptg.dDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::vector<double> coeffs_dd_dt = differentiate(coeffs_d);
+  std::vector<double> coeffs_d2d_dt2 = differentiate(coeffs_dd_dt);
+
+  std::cout << "Cost for d difference between (" << test_target_car_sd[3] << "," << 
+                                                    test_target_car_sd[4] << "," << 
+                                                    test_target_car_sd[5] << ") (target car) and (" << 
+                                                    toEquation(coeffs_d, time_real_traj) << "," << 
+                                                    toEquation(coeffs_dd_dt, time_real_traj) << "," << 
+                                                    toEquation(coeffs_d2d_dt2, time_real_traj) << 
+                                                    ") (ego car) is: " << d_diff_cost << std::endl;
+
+
+}
+
+int main() {
+  tests();
   return 0;
 }
+

@@ -3,6 +3,8 @@
 
 CMakeFiles/path_planning.dir/src/PTG.cpp.o: ../src/PTG.cpp
 CMakeFiles/path_planning.dir/src/PTG.cpp.o: ../src/PTG.h
+CMakeFiles/path_planning.dir/src/PTG.cpp.o: ../src/helpers.h
+CMakeFiles/path_planning.dir/src/PTG.cpp.o: ../src/vehicle.h
 
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/Eigen-3.3/Eigen/Cholesky
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/Eigen-3.3/Eigen/Core
@@ -166,6 +168,7 @@ CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/PTG.h
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/helpers.h
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/json.hpp
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/main.cpp
+CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/vehicle.h
 
 CMakeFiles/path_planning.dir/src/vehicle.cpp.o: ../src/vehicle.cpp
 CMakeFiles/path_planning.dir/src/vehicle.cpp.o: ../src/vehicle.h

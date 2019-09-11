@@ -46,3 +46,85 @@ std::vector<double> PTG::JMT(std::vector<double> &start, std::vector<double> &en
 
    return {a0, a1, a2, a3, a4, a5};
 }
+
+// Penalizes trajectories that span a duration which is longer or 
+// shorter than the duration requested.
+double PTG::timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   double t = trajectory.final_time;
+   return logistic(abs(t-T)/T);
+}
+
+// Penalizes trajectories whose s coordinate (and derivatives) 
+//  differ from the goal.
+double PTG::sDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   double final_time = trajectory.final_time;
+
+   // It gets the coordinates s and d of the target vehicle at the end of the trajectory 
+   vehicle target_vehicle = predictions.at(targetVehicleId);
+   vector<double> target_vehicle_final_sd = target_vehicle.stateIn(final_time);
+   // It adds the delta to the s and d coordinates of the target vehicle, 
+   // getting the position desired by the ego vehicle.
+   for (unsigned int i = 0; i < target_vehicle_final_sd.size(); i++) {
+      target_vehicle_final_sd[i] += delta[i];
+   }
+   vector<double> target_vehicle_final_s {target_vehicle_final_sd[0], 
+                                          target_vehicle_final_sd[1], 
+                                          target_vehicle_final_sd[2]};
+   // It gets the end s, s' and s'' of the ego vehicle 
+   // using the polynomic coefficients saved in "s"
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);
+   vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
+
+   vector<double> ego_vehicle_final_s {toEquation(s_coeffs, final_time), 
+                                       toEquation(ds_dt_coeffs, final_time), 
+                                       toEquation(d2s_dt2_coeffs, final_time)};
+   // It gets the difference between the final s, s' and s'' of the trajectory and the
+   // ones based on the position of the target car, converts it to a value between -1 and 1 
+   // and sums it to get the cost.
+   double cost = 0.0;
+   for (unsigned int i = 0; i < ego_vehicle_final_s.size(); i++) {
+      double diff = abs(ego_vehicle_final_s[i] - target_vehicle_final_s[i]);
+      cost += logistic(diff/this->SIGMA_S[i]);
+   }
+   return cost;
+}
+
+// Penalizes trajectories whose d coordinate (and derivatives) 
+//  differ from the goal.
+double PTG::dDiffCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   double final_time = trajectory.final_time;
+
+   // It gets the coordinates s and d of the target vehicle at the end of the trajectory 
+   vehicle target_vehicle = predictions.at(targetVehicleId);
+   vector<double> target_vehicle_final_sd = target_vehicle.stateIn(final_time);
+   // It adds the delta to the s and d coordinates of the target vehicle, 
+   // getting the position desired by the ego vehicle.
+   for (unsigned int i = 0; i < target_vehicle_final_sd.size(); i++) {
+      target_vehicle_final_sd[i] += delta[i];
+   }
+   vector<double> target_vehicle_final_d {target_vehicle_final_sd[3], 
+                                          target_vehicle_final_sd[4], 
+                                          target_vehicle_final_sd[5]};
+   // It gets the end d, d' and d'' of the ego vehicle 
+   // using the polynomic coefficients saved in "d"
+   vector<double> dd_dt_coeffs = differentiate(d_coeffs);
+   vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
+
+   vector<double> ego_vehicle_final_d {toEquation(d_coeffs, final_time), 
+                                       toEquation(dd_dt_coeffs, final_time), 
+                                       toEquation(d2d_dt2_coeffs, final_time)};
+   // It gets the difference between the final d, d' and d'' of the trajectory and the
+   // ones based on the position of the target car, converts it to a value between -1 and 1 
+   // and sums it to get the cost.
+   double cost = 0.0;
+   for (unsigned int i = 0; i < ego_vehicle_final_d.size(); i++) {
+      double diff = abs(ego_vehicle_final_d[i] - target_vehicle_final_d[i]);
+      cost += logistic(diff/this->SIGMA_D[i]);
+   }
+   return cost;
+}

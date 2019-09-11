@@ -777,6 +777,12 @@ cmath
 -
 vector
 -
+map
+-
+vehicle.h
+/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.h
+helpers.h
+/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/helpers.h
 
 /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/helpers.h
 math.h
@@ -863,4 +869,8 @@ json.hpp
 /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/json.hpp
 PTG.h
 /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.h
+
+/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.h
+vector
+-
 
