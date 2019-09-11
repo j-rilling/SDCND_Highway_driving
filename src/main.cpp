@@ -7,6 +7,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "helpers.h"
 #include "json.hpp"
+#include "vehicle.h"
 
 // for convenience
 using nlohmann::json;
@@ -136,15 +137,21 @@ int main_project() {
 }
 
 int main() {
-  vector<double> coeffs {3,8,-2,3,4};
-  vector<double> coeffs_d = differentiate(coeffs);
-  vector<double> coeffs_d_d = differentiate(coeffs_d);
 
-  std::cout << "f(1): " << toEquation(coeffs, 1) << std::endl;
-  std::cout << "f'(1): " << toEquation(coeffs_d, 1) << std::endl;
-  std::cout << "f''(1): " << toEquation(coeffs_d_d, 1) << std::endl;
-  std::cout << "f(3): " << toEquation(coeffs, 3) << std::endl;
-  std::cout << "f'(3): " << toEquation(coeffs_d, 3) << std::endl;
-  std::cout << "f''(3): " << toEquation(coeffs_d_d, 3) << std::endl;
+  std::vector<double> start_cons {3, 4, 2, 1, 2, 2};
+
+  vehicle car = vehicle(start_cons);
+
+  double t = 50;
+  
+  std::vector<double> end_cons = car.stateIn(t);
+
+  std::cout << "s(" << t << ") = " << end_cons[0] << std::endl;
+  std::cout << "s'(" << t << ") = " << end_cons[1] << std::endl;
+  std::cout << "s''(" << t << ") = " << end_cons[2] << std::endl;
+  std::cout << "d(" << t << ") = " << end_cons[3] << std::endl;
+  std::cout << "d'(" << t << ") = " << end_cons[4] << std::endl;
+  std::cout << "d''(" << t << ") = " << end_cons[5] << std::endl;
+
   return 0;
 }
