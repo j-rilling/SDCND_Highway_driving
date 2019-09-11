@@ -154,4 +154,34 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s,
   return {x,y};
 }
 
+
+// A function that returns a value between 0 and 1 for x in the 
+// range [0, infinity] and -1 to 1 for x in the range [-infinity, infinity].
+// Useful for cost functions.
+double logistic(double x) {
+  return 2.0 / (1 + exp(-x)) - 1.0;
+}
+
+// Takes the coefficients of a polynomial and creates a function of
+// time from them.
+double toEquation(vector<double> coefficients, double t) {
+  double total = 0.0;
+  for (unsigned int i = 0; i < coefficients.size(); i++) {
+    total += coefficients[i]*pow(t,i);
+  }
+  return total;
+}
+
+// Calculates the derivative of a polynomial and returns
+// the corresponding coefficients.
+vector<double> differentiate(vector<double> coefficients) {
+  vector<double> new_coeffs;
+  for (unsigned int i = 1; i < coefficients.size(); i++) {
+    new_coeffs.push_back(static_cast<double>(i)*coefficients[i]);
+  }
+  return new_coeffs;
+}
+
+
+
 #endif  // HELPERS_H

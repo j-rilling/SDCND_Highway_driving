@@ -13,7 +13,7 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
-int main() {
+int main_project() {
   uWS::Hub h;
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
@@ -133,4 +133,18 @@ int main() {
   }
   
   h.run();
+}
+
+int main() {
+  vector<double> coeffs {3,8,-2,3,4};
+  vector<double> coeffs_d = differentiate(coeffs);
+  vector<double> coeffs_d_d = differentiate(coeffs_d);
+
+  std::cout << "f(1): " << toEquation(coeffs, 1) << std::endl;
+  std::cout << "f'(1): " << toEquation(coeffs_d, 1) << std::endl;
+  std::cout << "f''(1): " << toEquation(coeffs_d_d, 1) << std::endl;
+  std::cout << "f(3): " << toEquation(coeffs, 3) << std::endl;
+  std::cout << "f'(3): " << toEquation(coeffs_d, 3) << std::endl;
+  std::cout << "f''(3): " << toEquation(coeffs_d_d, 3) << std::endl;
+  return 0;
 }
