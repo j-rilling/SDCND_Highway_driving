@@ -7,7 +7,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "helpers.h"
 #include "json.hpp"
-#include "vehicle.h"
+#include "PTG.h"
 
 // for convenience
 using nlohmann::json;
@@ -138,20 +138,19 @@ int main_project() {
 
 int main() {
 
-  std::vector<double> start_cons {3, 4, 2, 1, 2, 2};
+  std::vector<double> start {5, 10, 2};
+  std::vector<double> end {-30, -20, -4};
 
-  vehicle car = vehicle(start_cons);
+  PTG ptg = PTG();
+  double T = 5.0;
+  std::vector<double> coeffs = ptg.JMT(start, end, T);
 
-  double t = 50;
-  
-  std::vector<double> end_cons = car.stateIn(t);
-
-  std::cout << "s(" << t << ") = " << end_cons[0] << std::endl;
-  std::cout << "s'(" << t << ") = " << end_cons[1] << std::endl;
-  std::cout << "s''(" << t << ") = " << end_cons[2] << std::endl;
-  std::cout << "d(" << t << ") = " << end_cons[3] << std::endl;
-  std::cout << "d'(" << t << ") = " << end_cons[4] << std::endl;
-  std::cout << "d''(" << t << ") = " << end_cons[5] << std::endl;
+  std::cout << "a0: " << coeffs[0] << std::endl;
+  std::cout << "a1: " << coeffs[1] << std::endl;
+  std::cout << "a2: " << coeffs[2] << std::endl;
+  std::cout << "a3: " << coeffs[3] << std::endl;
+  std::cout << "a4: " << coeffs[4] << std::endl;
+  std::cout << "a5: " << coeffs[5] << std::endl;
 
   return 0;
 }

@@ -1,12 +1,17 @@
 #ifndef PTG_H
 #define PTG_H
 
+#include <cmath>
+#include <vector>
+
 // This class is responsible of generating polynomial trajectories
 
 class PTG {
   public:
     PTG();
     ~PTG();
+
+    std::vector<double> JMT (std::vector<double> &start, std::vector<double> &end, double T);
 
   private:
     const double N_SAMPLES = 10;
