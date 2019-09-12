@@ -22,6 +22,10 @@ class PTG {
 
     std::vector<double> JMT (std::vector<double> &start, std::vector<double> &end, double T);
 
+    double nearestApproach(const trajInfo &trajectory, vehicle predictionOfOneVehicle);
+
+    double nearestApproachToAnyVehicle(const trajInfo &trajectory, const std::map <int, vehicle> &predictions);
+
     double timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
       const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
 
@@ -30,6 +34,13 @@ class PTG {
 
     double dDiffCost(const trajInfo &trajectory, int targetVehicleId, 
       const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double collisionCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double bufferDistCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);    
+    
 
   private:
     const double N_SAMPLES = 10;

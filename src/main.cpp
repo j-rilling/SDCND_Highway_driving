@@ -142,7 +142,7 @@ void tests() {
   std::vector<double> start_s {5, 10, 2};
   std::vector<double> end_s {50, 10, 0};
   std::vector<double> start_d {0, 0, 0};
-  std::vector<double> end_d {10, 0, 0};
+  std::vector<double> end_d {3.5, 0, 0};
 
   PTG ptg = PTG();
   double time_given = 5.0;
@@ -173,6 +173,7 @@ void tests() {
   
   // Test time difference cost function
   vehicle test_target_car = vehicle({0, 10, 0, 0, 0, 0});
+  vehicle test_target_car_2 = vehicle({0, 10, 0, 4, 0, 0});
 
   std::map<int, vehicle> predictions {{0, test_target_car}};
   int test_target_car_id = 0;
@@ -212,6 +213,21 @@ void tests() {
                                                     toEquation(coeffs_d2d_dt2, time_real_traj) << 
                                                     ") (ego car) is: " << d_diff_cost << std::endl;
 
+  // Test of "nearestApproach" method
+  double closest_distance_between_cars = ptg.nearestApproach(test_trajectory, test_target_car);
+  std::cout << "The nearest approach between both cars is: " << closest_distance_between_cars << std::endl;
+
+  // Test of "nearestApproachToAnyVehicle" method
+  double closest_distance_between_all_cars = ptg.nearestApproachToAnyVehicle(test_trajectory, predictions);
+  std::cout << "The nearest approach between all cars is: " << closest_distance_between_all_cars << std::endl;
+
+  // Test of "collisionCost" method
+  double collision_cost = ptg.collisionCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The collision cost is: " << collision_cost << std::endl;
+
+  // Test of "bufferDistCost" method
+  double buffer_dist_cost = ptg.bufferDistCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The buffer distance cost is: " << buffer_dist_cost << std::endl;
 
 }
 

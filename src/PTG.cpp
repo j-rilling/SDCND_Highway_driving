@@ -47,6 +47,39 @@ std::vector<double> PTG::JMT(std::vector<double> &start, std::vector<double> &en
    return {a0, a1, a2, a3, a4, a5};
 }
 
+// Calculates the closest distance to any vehicle during a trajectory.
+double PTG::nearestApproach(const trajInfo &trajectory, vehicle predictionOfOneVehicle) {
+   double closest_dist = 999999;
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   double time_end_trajectory = trajectory.final_time;
+
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = (static_cast<double>(i)/100.0) * time_end_trajectory;
+      double curr_s = toEquation(s_coeffs, t);
+      double curr_d = toEquation(d_coeffs, t);
+      double targ_s = predictionOfOneVehicle.stateIn(t)[0];
+      double targ_d = predictionOfOneVehicle.stateIn(t)[3];
+      double dist_ego_curr = distance(curr_s,curr_d, targ_s, targ_d);
+      if (dist_ego_curr < closest_dist) {
+         closest_dist = dist_ego_curr;
+      }
+   }
+   return closest_dist;
+}
+
+// Calculates the closest distance to any vehicle during a trajectory.
+double PTG::nearestApproachToAnyVehicle(const trajInfo &trajectory, const std::map <int, vehicle> &predictions) {
+   double closest_dist = 999999;
+   for (std::map<int, vehicle>::const_iterator it = predictions.begin(); it != predictions.end(); it++) {
+      double curr_vehicle_distance = this->nearestApproach(trajectory, it->second);
+      if (curr_vehicle_distance < closest_dist) {
+         closest_dist = curr_vehicle_distance;
+      }
+   }
+   return closest_dist;
+}
+
 // Penalizes trajectories that span a duration which is longer or 
 // shorter than the duration requested.
 double PTG::timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
@@ -127,4 +160,23 @@ double PTG::dDiffCost(const trajInfo &trajectory, int targetVehicleId,
       cost += logistic(diff/this->SIGMA_D[i]);
    }
    return cost;
+}
+
+// Binary cost function which penalizes collisions.
+double PTG::collisionCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   double nearest_approach = nearestApproachToAnyVehicle(trajectory, predictions);
+   if (nearest_approach < 2.0*this->VEHICLE_RADIUS) {
+      return 1.0;
+   }
+   else {
+      return 0.0;
+   }
+}
+
+// Penalizes getting close to other vehicles.
+double PTG::bufferDistCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   double nearest_approach = nearestApproachToAnyVehicle(trajectory, predictions);
+   return logistic(2.0*this->VEHICLE_RADIUS / nearest_approach);
 }
