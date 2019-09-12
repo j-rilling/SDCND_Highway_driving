@@ -139,10 +139,10 @@ int main_project() {
 void tests() {
 
   // TEST: JMT Method of PTG class
-  std::vector<double> start_s {5, 10, 2};
+  std::vector<double> start_s {5, 5, 2};
   std::vector<double> end_s {50, 10, 0};
   std::vector<double> start_d {0, 0, 0};
-  std::vector<double> end_d {3.5, 0, 0};
+  std::vector<double> end_d {0, 0, 0};
 
   PTG ptg = PTG();
   double time_given = 5.0;
@@ -229,7 +229,19 @@ void tests() {
   double buffer_dist_cost = ptg.bufferDistCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
   std::cout << "The buffer distance cost is: " << buffer_dist_cost << std::endl;
 
+  // Test of "goOutRoadCost" method
+  double go_out_road_cost = ptg.goOutRoadCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The go out road cost is: " << go_out_road_cost << std::endl;
+
+  // Test of "exceedsSpeedLimitCost" method
+  double exceeds_speed_limit_cost = ptg.exceedsSpeedLimitCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The exceed speed limit cost is: " << exceeds_speed_limit_cost << std::endl;
+
+  // Test of "efficiencyCost" method
+  double efficiency_cost = ptg.efficiencyCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The efficiency cost is: " << efficiency_cost << std::endl;
 }
+
 
 int main() {
   tests();

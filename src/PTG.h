@@ -39,7 +39,16 @@ class PTG {
       const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
 
     double bufferDistCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);    
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+
+    double goOutRoadCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+
+    double exceedsSpeedLimitCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double efficiencyCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);      
     
 
   private:
@@ -54,10 +63,10 @@ class PTG {
     const double EXPECTED_JERK_IN_ONE_SEC = 2; // m/(s^2)
     const double EXPECTED_ACC_IN_ONE_SEC = 1;  // m/s
 
-    const double SPEED_LIMIT = 30.0;
+    const double SPEED_LIMIT = 22.352;    // m/s (22.352 m/s = 50 mph)
     const double VEHICLE_RADIUS = 1.5;  // model vehicle as circle to simplify collision detection (change later)
 
-    const double ROAD_D[2] = {0.0, 5.0}; // Change later to {0.0, 12.0}
+    const double ROAD_D[2] = {0.0, 12.0}; // Change later to {0.0, 12.0}
 
 };
 

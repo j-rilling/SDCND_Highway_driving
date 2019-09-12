@@ -180,3 +180,65 @@ double PTG::bufferDistCost(const trajInfo &trajectory, int targetVehicleId,
    double nearest_approach = nearestApproachToAnyVehicle(trajectory, predictions);
    return logistic(2.0*this->VEHICLE_RADIUS / nearest_approach);
 }
+
+// Penalizes getting out of the road. 
+// It calculates the lateral distance the car was out of the road using 100 different 
+// points of the trajectory equally separated. Sums up all the distances and returns 
+// the logistic function of this sum divided by 100.
+double PTG::goOutRoadCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_distance_out_road = 0.0;
+
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double current_d = toEquation(d_coeffs, t);
+      if ((current_d - this->VEHICLE_RADIUS) < this->ROAD_D[0]) {
+         total_distance_out_road += (this->ROAD_D[0] - (current_d - this->VEHICLE_RADIUS));
+      }
+      else if ((current_d + this->VEHICLE_RADIUS) > this->ROAD_D[1]) {
+         total_distance_out_road += ((current_d + this->VEHICLE_RADIUS) - this->ROAD_D[1]);
+      }
+   }
+   return logistic(total_distance_out_road/100.0);
+}
+
+
+// Penalizes exceeding the speed limit.
+double PTG::exceedsSpeedLimitCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);   
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_speed_exceeded = 0.0;
+
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double current_speed_s = toEquation(ds_dt_coeffs, t);
+      if (current_speed_s - this->SPEED_LIMIT > 0.0) {
+         total_speed_exceeded += (current_speed_s - this->SPEED_LIMIT);
+      }
+   }
+   return logistic(total_speed_exceeded/100.0);
+}
+
+// Rewards average speeds higher than the ones of "target vehicle"
+// This means, the cost function gives a cost bigger than 1 if the 
+// average speed of the ego vehicle is bigger than the average speed
+// of the target vehicle plus a delta. In the contrary case, it gives 
+// costs lower than 1. 
+// An example for clarification: If delta[1] = -10, that means that
+// the desired speed is 10 m/s lower than the speed of the target car.
+double PTG::efficiencyCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> dt_ds_coeffs = differentiate(s_coeffs);
+   double final_time = trajectory.final_time;
+   double avg_ego_speed_s = toEquation(dt_ds_coeffs, final_time)/final_time;
+   vehicle target_vehicle = predictions.at(targetVehicleId);
+   double avg_target_speed_s = target_vehicle.stateIn(final_time)[1]/final_time;
+   return logistic(2*((avg_target_speed_s + delta[1]) - avg_ego_speed_s)/avg_ego_speed_s);
+}
