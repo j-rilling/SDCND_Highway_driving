@@ -242,3 +242,190 @@ double PTG::efficiencyCost(const trajInfo &trajectory, int targetVehicleId,
    double avg_target_speed_s = target_vehicle.stateIn(final_time)[1]/final_time;
    return logistic(2*((avg_target_speed_s + delta[1]) - avg_ego_speed_s)/avg_ego_speed_s);
 }
+
+// It penalizes trajectories which have average acceleration higher than the expected 
+// acceleration in one second. High acceleration is directly related with the fuel 
+// efficiency of the car, so it is also desired to reduce the total acceleration, 
+// but is not that important as minimizing jerk.
+double PTG::totalAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);
+   vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_acc_s = 0.0;
+   for (unsigned int i = 0; i < 100; i++){
+      double t = dt*static_cast<double>(i);
+      total_acc_s += abs(dt*toEquation(d2s_dt2_coeffs,t));
+   }
+   double avg_acc_s = total_acc_s/final_time;
+   return logistic(avg_acc_s/this->EXPECTED_ACC_IN_ONE_SEC);
+}
+
+// It penalizes trajectories which have average acceleration higher than the expected 
+// acceleration in one second. High acceleration is directly related with the fuel 
+// efficiency of the car, so it is also desired to reduce the total acceleration, 
+// but is not that important as minimizing jerk.
+double PTG::totalAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   vector<double> dd_dt_coeffs = differentiate(d_coeffs);
+   vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_acc_d = 0.0;
+   for (unsigned int i = 0; i < 100; i++){
+      double t = dt*static_cast<double>(i);
+      total_acc_d += abs(dt*toEquation(d2d_dt2_coeffs,t));
+   }
+   double avg_acc_d = total_acc_d/final_time;
+   return logistic(avg_acc_d/this->EXPECTED_ACC_IN_ONE_SEC);
+}
+
+// It penalizes trajectories which reaches at some point the maximum acceleration the car can produce
+// This cost function needs to be weighted accordingly in order to not break the car
+double PTG::maxAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);
+   vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double max_acc_s = 0.0;
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double curr_acc_s = toEquation(d2s_dt2_coeffs, t);
+      if (curr_acc_s > max_acc_s) {
+         max_acc_s = curr_acc_s;
+      }
+   }
+   if (abs(max_acc_s) > this->MAX_ACCEL) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
+
+
+// It penalizes trajectories which reaches at some point the maximum lateral acceleration the car can produce
+// This cost function needs to be weighted accordingly in order to not break the car
+double PTG::maxAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   vector<double> dd_dt_coeffs = differentiate(d_coeffs);
+   vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double max_acc_d = 0.0;
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double curr_acc_d = toEquation(d2d_dt2_coeffs, t);
+      if (curr_acc_d > max_acc_d) {
+         max_acc_d = curr_acc_d;
+      }
+   }
+   if (abs(max_acc_d) > this->MAX_ACCEL) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
+
+// It penalizes trajectories which have average jerk higher than the expected 
+// jerk in one second. High jerk is uncomfortable for humans, so this cost function
+// needs to have a very high cost.
+double PTG::totalJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);
+   vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
+   vector<double> d3s_dt3_coeffs = differentiate(d2s_dt2_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_jerk_s = 0.0;;
+   for (unsigned int i = 0; i < 100; i++){
+      double t = dt*static_cast<double>(i);
+      total_jerk_s += abs(dt*toEquation(d3s_dt3_coeffs,t));
+   }
+   double avg_jerk_s = total_jerk_s/final_time;
+   return logistic(avg_jerk_s/this->EXPECTED_JERK_IN_ONE_SEC);
+}
+
+// It penalizes trajectories which have average jerk higher than the expected 
+// jerk in one second. High jerk is uncomfortable for humans, so this cost function
+// needs to have a very high cost.
+double PTG::totalJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   vector<double> dd_dt_coeffs = differentiate(d_coeffs);
+   vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
+   vector<double> d3d_dt3_coeffs = differentiate(d2d_dt2_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double total_jerk_d = 0.0;;
+   for (unsigned int i = 0; i < 100; i++){
+      double t = dt*static_cast<double>(i);
+      total_jerk_d += abs(dt*toEquation(d3d_dt3_coeffs,t));
+   }
+   double avg_jerk_d = total_jerk_d/final_time;
+   return logistic(avg_jerk_d/this->EXPECTED_JERK_IN_ONE_SEC);
+}
+
+// It penalizes trajectories that reach at some point the maximum jerk the car can produce
+// This cost function needs to be weighted accordingly in order to not break the car
+double PTG::maxJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> s_coeffs = trajectory.s_coeffs;
+   vector<double> ds_dt_coeffs = differentiate(s_coeffs);
+   vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
+   vector<double> d3s_dt3_coeffs = differentiate(d2s_dt2_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double max_jerk_s = 0.0;
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double curr_jerk_s = toEquation(d2s_dt2_coeffs, t);
+      if (curr_jerk_s > max_jerk_s) {
+         max_jerk_s = curr_jerk_s;
+      }
+   }
+   if (abs(max_jerk_s) > this->MAX_JERK) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
+
+// It penalizes trajectories that reach at some point the maximum jerk the car can produce
+// This cost function needs to be weighted accordingly in order to not break the car
+double PTG::maxJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   vector<double> d_coeffs = trajectory.d_coeffs;
+   vector<double> dd_dt_coeffs = differentiate(d_coeffs);
+   vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
+   vector<double> d3d_dt3_coeffs = differentiate(d2d_dt2_coeffs);
+   double final_time = trajectory.final_time;
+   double dt = final_time/100.0;
+   double max_jerk_d = 0.0;
+   for (unsigned int i = 0; i < 100; i++) {
+      double t = dt*static_cast<double>(i);
+      double curr_jerk_d = toEquation(d2d_dt2_coeffs, t);
+      if (curr_jerk_d > max_jerk_d) {
+         max_jerk_d = curr_jerk_d;
+      }
+   }
+   if (abs(max_jerk_d) > this->MAX_JERK) {
+      return 1;
+   }
+   else {
+      return 0;
+   }
+}
+
+
+
+

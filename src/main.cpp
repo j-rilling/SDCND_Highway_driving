@@ -139,10 +139,10 @@ int main_project() {
 void tests() {
 
   // TEST: JMT Method of PTG class
-  std::vector<double> start_s {5, 5, 2};
-  std::vector<double> end_s {50, 10, 0};
+  std::vector<double> start_s {5, 5, 0};
+  std::vector<double> end_s {30, 5, 10};
   std::vector<double> start_d {0, 0, 0};
-  std::vector<double> end_d {0, 0, 0};
+  std::vector<double> end_d {5, 0, 10};
 
   PTG ptg = PTG();
   double time_given = 5.0;
@@ -240,6 +240,38 @@ void tests() {
   // Test of "efficiencyCost" method
   double efficiency_cost = ptg.efficiencyCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
   std::cout << "The efficiency cost is: " << efficiency_cost << std::endl;
+
+  // Test of "totalAccelSCost" method
+  double total_acc_s_cost = ptg.totalAccelSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The total acceleration cost (s) is: " << total_acc_s_cost << std::endl;
+
+  // Test of "totalAccelDCost" method
+  double total_acc_d_cost = ptg.totalAccelDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The total acceleration cost (d) is: " << total_acc_d_cost << std::endl;
+
+  // Test of "maxAccelSCost" method
+  double max_acc_s_cost = ptg.maxAccelSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The max acceleration cost (s) is: " << max_acc_s_cost << std::endl;
+
+  // Test of "maxAccelDCost" method
+  double max_acc_d_cost = ptg.maxAccelDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The max acceleration cost (d) is: " << max_acc_d_cost << std::endl;
+
+  // Tesf of "totalJerkSCost" method
+  double total_jerk_s_cost = ptg.totalJerkSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The total jerk cost (s) is: " << total_jerk_s_cost << std::endl;
+
+  // Tesf of "totalJerkDCost" method
+  double total_jerk_d_cost = ptg.totalJerkDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The total jerk cost (d) is: " << total_jerk_d_cost << std::endl;
+
+  // Tesf of "maxJerkSCost" method
+  double max_jerk_s_cost = ptg.maxJerkSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The max jerk cost (s) is: " << max_jerk_s_cost << std::endl;
+
+  // Tesf of "maxJerkDCost" method
+  double max_jerk_d_cost = ptg.maxJerkDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  std::cout << "The max jerk cost (d) is: " << max_jerk_d_cost << std::endl;
 }
 
 

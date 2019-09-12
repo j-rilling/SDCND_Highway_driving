@@ -48,8 +48,31 @@ class PTG {
       const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
 
     double efficiencyCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);      
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double totalAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double totalAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+
+    double maxAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);    
+
+    double maxAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
+
+    double totalJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
     
+    double totalJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+  
+    double maxJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
+    
+    double maxJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
 
   private:
     const double N_SAMPLES = 10;
