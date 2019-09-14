@@ -139,9 +139,9 @@ int main_project() {
 void tests() {
 
   // TEST: JMT Method of PTG class
-  std::vector<double> start_s {5, 5, 0};
+  std::vector<double> start_s {10, 10, 0};
   std::vector<double> end_s {30, 5, 10};
-  std::vector<double> start_d {0, 0, 0};
+  std::vector<double> start_d {4, 0, 0};
   std::vector<double> end_d {5, 0, 10};
 
   PTG ptg = PTG();
@@ -272,6 +272,27 @@ void tests() {
   // Tesf of "maxJerkDCost" method
   double max_jerk_d_cost = ptg.maxJerkDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
   std::cout << "The max jerk cost (d) is: " << max_jerk_d_cost << std::endl;
+
+  // Test of "calculateTotalCost" method
+  double total_cost = ptg.calculateTotalCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions, true);
+  std::cout << "The total cost is : " << total_cost << std::endl;
+
+  // Test of "perturbGoal" method
+  std::vector<std::vector<double>> perturbed_end = ptg.perturbGoal(end_s, end_d);
+  std::vector<double> perturbed_end_s = perturbed_end[0];
+  std::vector<double> perturbed_end_d = perturbed_end[1];
+
+  std::cout << std::endl << "TEST: PERTURB GOAL" << std::endl;
+  std::cout << "The pertubed goal (s) is: (" << perturbed_end_s[0] << "), (" <<
+                                                perturbed_end_s[1] << "), (" <<
+                                                perturbed_end_s[2] << ")" << std::endl;
+
+  std::cout << "The pertubed goal (d) is: (" << perturbed_end_d[0] << "), (" <<
+                                                perturbed_end_d[1] << "), (" <<
+                                                perturbed_end_d[2] << ")" << std::endl;
+  
+  // Test of "best trajectory" method
+  trajInfo best_trajectory = ptg.getBestFollowTrajectory(start_s, start_d, test_target_car_id, delta_car, time_given, predictions);
 }
 
 

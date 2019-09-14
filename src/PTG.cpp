@@ -426,6 +426,107 @@ double PTG::maxJerkDCost(const trajInfo &trajectory, int targetVehicleId,
    }
 }
 
+double PTG::calculateTotalCost(const trajInfo &trajectory, int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions, bool verbose) {
+   vector<costFunction> cfList {&PTG::timeDiffCost, &PTG::sDiffCost, &PTG::dDiffCost, &PTG::collisionCost, &PTG::bufferDistCost, 
+                            &PTG::goOutRoadCost, &PTG::exceedsSpeedLimitCost, &PTG::efficiencyCost, &PTG::totalAccelSCost, 
+                            &PTG::totalAccelDCost, &PTG::maxAccelSCost, &PTG::maxAccelDCost, &PTG::totalJerkSCost,
+                            &PTG::totalJerkDCost, &PTG::maxJerkSCost, &PTG::maxJerkDCost};
+   vector<double> weights  {WEIGHT_TIME_DIFF, WEIGHT_S_DIFF, WEIGHT_D_DIFF, WEIGHT_COLLISION, WEIGHT_BUFFER,
+                       WEIGHT_GO_OUT_ROAD, WEIGHT_EXCEED_SPEED_LIMIT, WEIGHT_EFFICIENCY, WEIGHT_TOTAL_ACCEL_S,
+                       WEIGHT_TOTAL_ACCEL_D, WEIGHT_MAX_ACCEL_S, WEIGHT_MAX_ACCEL_D, WEIGHT_TOTAL_JERK_S,
+                       WEIGHT_TOTAL_JERK_D, WEIGHT_MAX_JERK_S, WEIGHT_MAX_JERK_D};
+   vector<std::string> fNames = {"time difference ", "s difference ", "d difference ", "collision ", "buffer distance ",
+                                 "go out of road ", "exceed speed limit ", "efficiency ", "total s acceleration ", 
+                                 "total d acceleration ", "max s acceleration ", "max d acceleration ", "total s jerk ",
+                                 "total d jerk ", "max s jerk ", "max d jerk "};
 
+   double total_cost = 0.0;
+   for (unsigned int i = 0; i < cfList.size(); i++) {
+      double new_cost = weights[i]*(this->*cfList[i])(trajectory, targetVehicleId, delta, T, predictions);
+      if (verbose) {
+         std::cout << "Cost of " << fNames[i] << "is: " << new_cost << std::endl;
+      }
+      total_cost += new_cost;
 
+   }
+   return total_cost;
+}
 
+// Returns a "perturbed" version of the goal.
+vector<vector<double>> PTG::perturbGoal(vector<double> goalS, vector<double> goalD) {
+   std::default_random_engine random_gen;
+   random_gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
+   std::normal_distribution<double> s_pos_noise(goalS[0], this->SIGMA_S[0]);
+   std::normal_distribution<double> s_vel_noise(goalS[1], this->SIGMA_S[1]);
+   std::normal_distribution<double> s_acc_noise(goalS[2], this->SIGMA_S[2]);
+   std::normal_distribution<double> d_pos_noise(goalD[0], this->SIGMA_D[0]);
+   std::normal_distribution<double> d_vel_noise(goalD[1], this->SIGMA_D[1]);
+   std::normal_distribution<double> d_acc_noise(goalD[2], this->SIGMA_D[2]);
+
+   vector<double> new_s_goal {s_pos_noise(random_gen), s_vel_noise(random_gen), s_acc_noise(random_gen)};
+   vector<double> new_d_goal {d_pos_noise(random_gen), d_vel_noise(random_gen), d_acc_noise(random_gen)};
+
+   vector<vector<double>> new_goal {new_s_goal, new_d_goal};
+
+   return new_goal;
+}
+
+trajInfo PTG::getBestFollowTrajectory(vector<double> startS, vector<double> startD, int targetVehicleId,
+    const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+   
+   vehicle target_vehicle = predictions.at(targetVehicleId);
+
+   vector<vector<double>> all_goals_s;
+   vector<vector<double>> all_goals_d;
+   vector<double> all_times;
+   double timestep = 0.5;
+   double t = T - 4*timestep;
+   // Gets goals arround 4 time steps before and after the desired time
+   while (t <= T + 4*timestep) {
+      vector<double> target_state = target_vehicle.stateIn(t);
+      for (unsigned int i = 0; i < target_state.size(); i++) {
+         target_state[i] += delta[i];
+      }
+      vector<double> goal_s {target_state[0], target_state[1], target_state[2]};
+      vector<double> goal_d {target_state[3], target_state[4], target_state[5]};
+
+      // It gets N_SAMPLES different random possible positions of the target car at time t
+      for (unsigned int i = 0; i < this->N_SAMPLES; i++) {
+         vector<vector<double>> perturbed_goal = perturbGoal(goal_s, goal_d);
+         all_goals_s.push_back(perturbed_goal[0]);
+         all_goals_d.push_back(perturbed_goal[1]);
+         all_times.push_back(t);
+      }
+      t += timestep;
+   }
+
+   // Vector to save the desired trajectories
+   vector<trajInfo> trajectories;
+
+   // It gets trayectories for all the randomized last positions of the target car
+   for (unsigned int i = 0; i < all_goals_d.size(); i++) {
+      trajInfo curr_trajectory;
+      curr_trajectory.s_coeffs = JMT(startS, all_goals_s[i], all_times[i]);
+      curr_trajectory.d_coeffs = JMT(startS, all_goals_d[i], all_times[i]);
+      curr_trajectory.final_time = all_times[i];
+      // It appends all the possible trajectories (its polynomic coefficients actually) in "trajectories"
+      trajectories.push_back(curr_trajectory);
+   }
+
+   // It gets the best trajectory by getting the trajectory which yields the minimum cost 
+   // using all the cost functions and their weights 
+   trajInfo best_trajectory;
+   double min_cost = 999999;
+   for (unsigned int i = 0; i < trajectories.size(); i++) {
+      double traj_cost = calculateTotalCost(trajectories[i], targetVehicleId, delta, T, predictions, false);
+      if (traj_cost < min_cost) {
+         min_cost = traj_cost;
+         best_trajectory = trajectories[i];
+      }
+   }
+
+   // It calculates the weight of the best trajectory again and prints it
+   calculateTotalCost(best_trajectory, targetVehicleId, delta, T, predictions, true);
+   return best_trajectory;
+}
