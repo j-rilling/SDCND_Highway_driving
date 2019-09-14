@@ -24,64 +24,67 @@ class PTG {
     PTG();
     ~PTG();
 
-    std::vector<double> JMT (std::vector<double> &start, std::vector<double> &end, double T);
+    std::vector<double> JMT (const std::vector<double> &start, const std::vector<double> &end, double T);
 
     double nearestApproach(const trajInfo &trajectory, vehicle predictionOfOneVehicle);
 
     double nearestApproachToAnyVehicle(const trajInfo &trajectory, const std::map <int, vehicle> &predictions);
 
-    double timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double timeDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double sDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double sDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double dDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double dDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double collisionCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double collisionCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double bufferDistCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+    double bufferDistCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double goOutRoadCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+    double goOutRoadCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions); 
 
-    double exceedsSpeedLimitCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double exceedsSpeedLimitCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double efficiencyCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double efficiencyCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double totalAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double totalAccelSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double totalAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    double totalAccelDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
-    double maxAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);    
+    double maxAccelSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);   
 
-    double maxAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
+    double maxAccelDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions); 
 
-    double totalJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
+    double totalJerkSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions); 
     
-    double totalJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+    double totalJerkDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
   
-    double maxJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions); 
+    double maxJerkSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions); 
     
-    double maxJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);  
+    double maxJerkDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions); 
     
-    double calculateTotalCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions, bool verbose=false);
+    double calculateTotalCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions, bool verbose=false);
 
     vector<vector<double>> perturbGoal(vector<double> goalS, vector<double> goalD);
+
+    vector<vector<double>> getGoalBasedOnTarget(int targetVehicleId, 
+      const vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
 
     /*
     Finds the best trajectory according to WEIGHTED_COST_FUNCTIONS (global).
@@ -111,8 +114,9 @@ class PTG {
      (best_s, best_d, best_t) where best_s are the 6 coefficients representing s(t)
      best_d gives coefficients for d(t) and best_t gives duration associated w/ 
      this trajectory. */
-    trajInfo getBestFollowTrajectory(vector<double> startS, vector<double> startD, int targetVehicleId,
-    const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+    trajInfo getBestTrajectory(const vector<double> &startS, const vector<double> &startD, 
+      const vector<double> &goalS, const vector<double> &goalD, double T, 
+      const std::map<int, vehicle> &predictions);
 
 
   private:
@@ -150,7 +154,7 @@ class PTG {
     const double WEIGHT_MAX_JERK_D = 350.0;
 };
 
-typedef double (PTG::*costFunction) (const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions);
+typedef double (PTG::*costFunction) (const trajInfo &trajectory, const vector<double> &goalS, 
+  const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions);
 
 #endif //PTG_H

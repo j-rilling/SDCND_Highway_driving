@@ -8,7 +8,7 @@ PTG::~PTG() {
 
 }
 
-std::vector<double> PTG::JMT(std::vector<double> &start, std::vector<double> &end, double T) {
+std::vector<double> PTG::JMT(const vector<double> &start, const vector<double> &end, double T) {
       /**
    * Calculate the Jerk Minimizing Trajectory that connects the initial state
    * to the final state in time T.
@@ -82,30 +82,19 @@ double PTG::nearestApproachToAnyVehicle(const trajInfo &trajectory, const std::m
 
 // Penalizes trajectories that span a duration which is longer or 
 // shorter than the duration requested.
-double PTG::timeDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::timeDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    double t = trajectory.final_time;
    return logistic(abs(t-T)/T);
 }
 
 // Penalizes trajectories whose s coordinate (and derivatives) 
 //  differ from the goal.
-double PTG::sDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::sDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    double final_time = trajectory.final_time;
 
-   // It gets the coordinates s and d of the target vehicle at the end of the trajectory 
-   vehicle target_vehicle = predictions.at(targetVehicleId);
-   vector<double> target_vehicle_final_sd = target_vehicle.stateIn(final_time);
-   // It adds the delta to the s and d coordinates of the target vehicle, 
-   // getting the position desired by the ego vehicle.
-   for (unsigned int i = 0; i < target_vehicle_final_sd.size(); i++) {
-      target_vehicle_final_sd[i] += delta[i];
-   }
-   vector<double> target_vehicle_final_s {target_vehicle_final_sd[0], 
-                                          target_vehicle_final_sd[1], 
-                                          target_vehicle_final_sd[2]};
    // It gets the end s, s' and s'' of the ego vehicle 
    // using the polynomic coefficients saved in "s"
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);
@@ -119,7 +108,7 @@ double PTG::sDiffCost(const trajInfo &trajectory, int targetVehicleId,
    // and sums it to get the cost.
    double cost = 0.0;
    for (unsigned int i = 0; i < ego_vehicle_final_s.size(); i++) {
-      double diff = abs(ego_vehicle_final_s[i] - target_vehicle_final_s[i]);
+      double diff = abs(ego_vehicle_final_s[i] - goalS[i]);
       cost += logistic(diff/this->SIGMA_S[i]);
    }
    return cost;
@@ -127,22 +116,11 @@ double PTG::sDiffCost(const trajInfo &trajectory, int targetVehicleId,
 
 // Penalizes trajectories whose d coordinate (and derivatives) 
 //  differ from the goal.
-double PTG::dDiffCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::dDiffCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    double final_time = trajectory.final_time;
 
-   // It gets the coordinates s and d of the target vehicle at the end of the trajectory 
-   vehicle target_vehicle = predictions.at(targetVehicleId);
-   vector<double> target_vehicle_final_sd = target_vehicle.stateIn(final_time);
-   // It adds the delta to the s and d coordinates of the target vehicle, 
-   // getting the position desired by the ego vehicle.
-   for (unsigned int i = 0; i < target_vehicle_final_sd.size(); i++) {
-      target_vehicle_final_sd[i] += delta[i];
-   }
-   vector<double> target_vehicle_final_d {target_vehicle_final_sd[3], 
-                                          target_vehicle_final_sd[4], 
-                                          target_vehicle_final_sd[5]};
    // It gets the end d, d' and d'' of the ego vehicle 
    // using the polynomic coefficients saved in "d"
    vector<double> dd_dt_coeffs = differentiate(d_coeffs);
@@ -156,15 +134,15 @@ double PTG::dDiffCost(const trajInfo &trajectory, int targetVehicleId,
    // and sums it to get the cost.
    double cost = 0.0;
    for (unsigned int i = 0; i < ego_vehicle_final_d.size(); i++) {
-      double diff = abs(ego_vehicle_final_d[i] - target_vehicle_final_d[i]);
+      double diff = abs(ego_vehicle_final_d[i] - goalD[i]);
       cost += logistic(diff/this->SIGMA_D[i]);
    }
    return cost;
 }
 
 // Binary cost function which penalizes collisions.
-double PTG::collisionCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::collisionCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    double nearest_approach = nearestApproachToAnyVehicle(trajectory, predictions);
    if (nearest_approach < 2.0*this->VEHICLE_RADIUS) {
       return 1.0;
@@ -175,8 +153,8 @@ double PTG::collisionCost(const trajInfo &trajectory, int targetVehicleId,
 }
 
 // Penalizes getting close to other vehicles.
-double PTG::bufferDistCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::bufferDistCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    double nearest_approach = nearestApproachToAnyVehicle(trajectory, predictions);
    return logistic(2.0*this->VEHICLE_RADIUS / nearest_approach);
 }
@@ -185,8 +163,8 @@ double PTG::bufferDistCost(const trajInfo &trajectory, int targetVehicleId,
 // It calculates the lateral distance the car was out of the road using 100 different 
 // points of the trajectory equally separated. Sums up all the distances and returns 
 // the logistic function of this sum divided by 100.
-double PTG::goOutRoadCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::goOutRoadCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    double final_time = trajectory.final_time;
    double dt = final_time/100.0;
@@ -207,8 +185,8 @@ double PTG::goOutRoadCost(const trajInfo &trajectory, int targetVehicleId,
 
 
 // Penalizes exceeding the speed limit.
-double PTG::exceedsSpeedLimitCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::exceedsSpeedLimitCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);   
    double final_time = trajectory.final_time;
@@ -232,23 +210,22 @@ double PTG::exceedsSpeedLimitCost(const trajInfo &trajectory, int targetVehicleI
 // costs lower than 1. 
 // An example for clarification: If delta[1] = -10, that means that
 // the desired speed is 10 m/s lower than the speed of the target car.
-double PTG::efficiencyCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::efficiencyCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> dt_ds_coeffs = differentiate(s_coeffs);
    double final_time = trajectory.final_time;
    double avg_ego_speed_s = toEquation(dt_ds_coeffs, final_time)/final_time;
-   vehicle target_vehicle = predictions.at(targetVehicleId);
-   double avg_target_speed_s = target_vehicle.stateIn(final_time)[1]/final_time;
-   return logistic(2*((avg_target_speed_s + delta[1]) - avg_ego_speed_s)/avg_ego_speed_s);
+   double avg_target_speed_s = goalS[1]/final_time;
+   return logistic(2*(avg_target_speed_s - avg_ego_speed_s)/avg_ego_speed_s);
 }
 
 // It penalizes trajectories which have average acceleration higher than the expected 
 // acceleration in one second. High acceleration is directly related with the fuel 
 // efficiency of the car, so it is also desired to reduce the total acceleration, 
 // but is not that important as minimizing jerk.
-double PTG::totalAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::totalAccelSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);
    vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
@@ -267,8 +244,8 @@ double PTG::totalAccelSCost(const trajInfo &trajectory, int targetVehicleId,
 // acceleration in one second. High acceleration is directly related with the fuel 
 // efficiency of the car, so it is also desired to reduce the total acceleration, 
 // but is not that important as minimizing jerk.
-double PTG::totalAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::totalAccelDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    vector<double> dd_dt_coeffs = differentiate(d_coeffs);
    vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
@@ -285,8 +262,8 @@ double PTG::totalAccelDCost(const trajInfo &trajectory, int targetVehicleId,
 
 // It penalizes trajectories which reaches at some point the maximum acceleration the car can produce
 // This cost function needs to be weighted accordingly in order to not break the car
-double PTG::maxAccelSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::maxAccelSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);
    vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
@@ -311,8 +288,8 @@ double PTG::maxAccelSCost(const trajInfo &trajectory, int targetVehicleId,
 
 // It penalizes trajectories which reaches at some point the maximum lateral acceleration the car can produce
 // This cost function needs to be weighted accordingly in order to not break the car
-double PTG::maxAccelDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::maxAccelDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    vector<double> dd_dt_coeffs = differentiate(d_coeffs);
    vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
@@ -337,8 +314,8 @@ double PTG::maxAccelDCost(const trajInfo &trajectory, int targetVehicleId,
 // It penalizes trajectories which have average jerk higher than the expected 
 // jerk in one second. High jerk is uncomfortable for humans, so this cost function
 // needs to have a very high cost.
-double PTG::totalJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::totalJerkSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);
    vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
@@ -357,8 +334,8 @@ double PTG::totalJerkSCost(const trajInfo &trajectory, int targetVehicleId,
 // It penalizes trajectories which have average jerk higher than the expected 
 // jerk in one second. High jerk is uncomfortable for humans, so this cost function
 // needs to have a very high cost.
-double PTG::totalJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::totalJerkDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    vector<double> dd_dt_coeffs = differentiate(d_coeffs);
    vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
@@ -376,8 +353,8 @@ double PTG::totalJerkDCost(const trajInfo &trajectory, int targetVehicleId,
 
 // It penalizes trajectories that reach at some point the maximum jerk the car can produce
 // This cost function needs to be weighted accordingly in order to not break the car
-double PTG::maxJerkSCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::maxJerkSCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> s_coeffs = trajectory.s_coeffs;
    vector<double> ds_dt_coeffs = differentiate(s_coeffs);
    vector<double> d2s_dt2_coeffs = differentiate(ds_dt_coeffs);
@@ -402,8 +379,8 @@ double PTG::maxJerkSCost(const trajInfo &trajectory, int targetVehicleId,
 
 // It penalizes trajectories that reach at some point the maximum jerk the car can produce
 // This cost function needs to be weighted accordingly in order to not break the car
-double PTG::maxJerkDCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
+double PTG::maxJerkDCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions) {
    vector<double> d_coeffs = trajectory.d_coeffs;
    vector<double> dd_dt_coeffs = differentiate(d_coeffs);
    vector<double> d2d_dt2_coeffs = differentiate(dd_dt_coeffs);
@@ -426,8 +403,9 @@ double PTG::maxJerkDCost(const trajInfo &trajectory, int targetVehicleId,
    }
 }
 
-double PTG::calculateTotalCost(const trajInfo &trajectory, int targetVehicleId, 
-      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions, bool verbose) {
+// It calculates the total cost using all the cost functions and their weights.
+double PTG::calculateTotalCost(const trajInfo &trajectory, const vector<double> &goalS, 
+      const vector<double> &goalD, double T, const std::map<int, vehicle> &predictions, bool verbose) {
    vector<costFunction> cfList {&PTG::timeDiffCost, &PTG::sDiffCost, &PTG::dDiffCost, &PTG::collisionCost, &PTG::bufferDistCost, 
                             &PTG::goOutRoadCost, &PTG::exceedsSpeedLimitCost, &PTG::efficiencyCost, &PTG::totalAccelSCost, 
                             &PTG::totalAccelDCost, &PTG::maxAccelSCost, &PTG::maxAccelDCost, &PTG::totalJerkSCost,
@@ -443,7 +421,7 @@ double PTG::calculateTotalCost(const trajInfo &trajectory, int targetVehicleId,
 
    double total_cost = 0.0;
    for (unsigned int i = 0; i < cfList.size(); i++) {
-      double new_cost = weights[i]*(this->*cfList[i])(trajectory, targetVehicleId, delta, T, predictions);
+      double new_cost = weights[i]*(this->*cfList[i])(trajectory, goalS, goalD, T, predictions);
       if (verbose) {
          std::cout << "Cost of " << fNames[i] << "is: " << new_cost << std::endl;
       }
@@ -472,10 +450,27 @@ vector<vector<double>> PTG::perturbGoal(vector<double> goalS, vector<double> goa
    return new_goal;
 }
 
-trajInfo PTG::getBestFollowTrajectory(vector<double> startS, vector<double> startD, int targetVehicleId,
-    const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
-   
+// Returns the desired goal based on a target vehicle and a delta. Used in order to be able to generate 
+// trajectories without a target car, where some cost functions are discarded.
+vector<vector<double>> PTG::getGoalBasedOnTarget(int targetVehicleId, 
+      const std::vector<double> &delta, double T, const std::map<int, vehicle> &predictions) {
    vehicle target_vehicle = predictions.at(targetVehicleId);
+   double goal_s_pos = target_vehicle.stateIn(T)[0] + delta[0];
+   double goal_s_vel = target_vehicle.stateIn(T)[1] + delta[1];
+   double goal_s_acc = target_vehicle.stateIn(T)[2] + delta[2];
+   double goal_d_pos = target_vehicle.stateIn(T)[3] + delta[3];
+   double goal_d_vel = target_vehicle.stateIn(T)[4] + delta[4];
+   double goal_d_acc = target_vehicle.stateIn(T)[5] + delta[5];
+
+   vector<double> goal_s {goal_s_pos, goal_s_vel, goal_s_acc};
+   vector<double> goal_p {goal_d_pos, goal_d_vel, goal_d_acc};
+
+   return {goal_s, goal_p};
+}
+
+trajInfo PTG::getBestTrajectory(const vector<double> &startS, const vector<double> &startD, 
+      const vector<double> &goalS, const vector<double> &goalD, double T, 
+      const std::map<int, vehicle> &predictions) {
 
    vector<vector<double>> all_goals_s;
    vector<vector<double>> all_goals_d;
@@ -484,16 +479,9 @@ trajInfo PTG::getBestFollowTrajectory(vector<double> startS, vector<double> star
    double t = T - 4*timestep;
    // Gets goals arround 4 time steps before and after the desired time
    while (t <= T + 4*timestep) {
-      vector<double> target_state = target_vehicle.stateIn(t);
-      for (unsigned int i = 0; i < target_state.size(); i++) {
-         target_state[i] += delta[i];
-      }
-      vector<double> goal_s {target_state[0], target_state[1], target_state[2]};
-      vector<double> goal_d {target_state[3], target_state[4], target_state[5]};
-
       // It gets N_SAMPLES different random possible positions of the target car at time t
       for (unsigned int i = 0; i < this->N_SAMPLES; i++) {
-         vector<vector<double>> perturbed_goal = perturbGoal(goal_s, goal_d);
+         vector<vector<double>> perturbed_goal = perturbGoal(goalS, goalD);
          all_goals_s.push_back(perturbed_goal[0]);
          all_goals_d.push_back(perturbed_goal[1]);
          all_times.push_back(t);
@@ -519,7 +507,7 @@ trajInfo PTG::getBestFollowTrajectory(vector<double> startS, vector<double> star
    trajInfo best_trajectory;
    double min_cost = 999999;
    for (unsigned int i = 0; i < trajectories.size(); i++) {
-      double traj_cost = calculateTotalCost(trajectories[i], targetVehicleId, delta, T, predictions, false);
+      double traj_cost = calculateTotalCost(trajectories[i], goalS, goalD, T, predictions, false);
       if (traj_cost < min_cost) {
          min_cost = traj_cost;
          best_trajectory = trajectories[i];
@@ -527,6 +515,7 @@ trajInfo PTG::getBestFollowTrajectory(vector<double> startS, vector<double> star
    }
 
    // It calculates the weight of the best trajectory again and prints it
-   calculateTotalCost(best_trajectory, targetVehicleId, delta, T, predictions, true);
+   calculateTotalCost(best_trajectory, goalS, goalD, T, predictions, true);
    return best_trajectory;
 }
+

@@ -151,131 +151,19 @@ void tests() {
   double time_real_traj = 5.0;
 
   trajInfo test_trajectory {coeffs_s, coeffs_d, time_real_traj};
-
-  std::cout << std::endl << "TEST: JMT Method of PTG class" << std::endl;
-  std::cout << "Trajectory for s " << std::endl;
-  std::cout << "a0: " << coeffs_s[0] << std::endl;
-  std::cout << "a1: " << coeffs_s[1] << std::endl;
-  std::cout << "a2: " << coeffs_s[2] << std::endl;
-  std::cout << "a3: " << coeffs_s[3] << std::endl;
-  std::cout << "a4: " << coeffs_s[4] << std::endl;
-  std::cout << "a5: " << coeffs_s[5] << std::endl;
-  std::cout << std::endl;
-
-  std::cout << "Trajectory for d " << std::endl;
-  std::cout << "a0: " << coeffs_d[0] << std::endl;
-  std::cout << "a1: " << coeffs_d[1] << std::endl;
-  std::cout << "a2: " << coeffs_d[2] << std::endl;
-  std::cout << "a3: " << coeffs_d[3] << std::endl;
-  std::cout << "a4: " << coeffs_d[4] << std::endl;
-  std::cout << "a5: " << coeffs_d[5] << std::endl;
-  std::cout << std::endl;
   
-  // Test time difference cost function
   vehicle test_target_car = vehicle({0, 10, 0, 0, 0, 0});
   vehicle test_target_car_2 = vehicle({0, 10, 0, 4, 0, 0});
-
   std::map<int, vehicle> predictions {{0, test_target_car}};
   int test_target_car_id = 0;
 
   std::vector<double> delta_car {0,0,0,0,0,0};
 
-  double time_cost = ptg.timeDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
+  vector<vector<double>> goal = ptg.getGoalBasedOnTarget(test_target_car_id, delta_car, time_given, predictions);
 
-    std::cout << std::endl << "TEST: Cost functions" << std::endl;
-  std::cout << "Cost for time difference between " << time_given << "[s] and " << time_real_traj << "[s]: " << time_cost << std::endl;
+  double total_cost = ptg.calculateTotalCost(test_trajectory, goal[0], goal[1], time_given, predictions, true);
+  std::cout << "The total cost is: " << total_cost << std::endl;
 
-  // Test s diff cost function
-  double s_diff_cost = ptg.sDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-
-  std::vector<double> test_target_car_sd = test_target_car.stateIn(time_real_traj);
-  std::vector<double> coeffs_ds_dt = differentiate(coeffs_s);
-  std::vector<double> coeffs_d2s_dt2 = differentiate(coeffs_ds_dt);
-  
-  std::cout << "Cost for s difference between (" << test_target_car_sd[0] << "," << 
-                                                    test_target_car_sd[1] << "," << 
-                                                    test_target_car_sd[2] << ") (target car) and (" << 
-                                                    toEquation(coeffs_s, time_real_traj) << "," << 
-                                                    toEquation(coeffs_ds_dt, time_real_traj) << "," << 
-                                                    toEquation(coeffs_d2s_dt2, time_real_traj) << 
-                                                    ") (ego car) is: " << s_diff_cost << std::endl;
-
-  // Test d diff cost function
-  double d_diff_cost = ptg.dDiffCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::vector<double> coeffs_dd_dt = differentiate(coeffs_d);
-  std::vector<double> coeffs_d2d_dt2 = differentiate(coeffs_dd_dt);
-
-  std::cout << "Cost for d difference between (" << test_target_car_sd[3] << "," << 
-                                                    test_target_car_sd[4] << "," << 
-                                                    test_target_car_sd[5] << ") (target car) and (" << 
-                                                    toEquation(coeffs_d, time_real_traj) << "," << 
-                                                    toEquation(coeffs_dd_dt, time_real_traj) << "," << 
-                                                    toEquation(coeffs_d2d_dt2, time_real_traj) << 
-                                                    ") (ego car) is: " << d_diff_cost << std::endl;
-
-  // Test of "nearestApproach" method
-  double closest_distance_between_cars = ptg.nearestApproach(test_trajectory, test_target_car);
-  std::cout << "The nearest approach between both cars is: " << closest_distance_between_cars << std::endl;
-
-  // Test of "nearestApproachToAnyVehicle" method
-  double closest_distance_between_all_cars = ptg.nearestApproachToAnyVehicle(test_trajectory, predictions);
-  std::cout << "The nearest approach between all cars is: " << closest_distance_between_all_cars << std::endl;
-
-  // Test of "collisionCost" method
-  double collision_cost = ptg.collisionCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The collision cost is: " << collision_cost << std::endl;
-
-  // Test of "bufferDistCost" method
-  double buffer_dist_cost = ptg.bufferDistCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The buffer distance cost is: " << buffer_dist_cost << std::endl;
-
-  // Test of "goOutRoadCost" method
-  double go_out_road_cost = ptg.goOutRoadCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The go out road cost is: " << go_out_road_cost << std::endl;
-
-  // Test of "exceedsSpeedLimitCost" method
-  double exceeds_speed_limit_cost = ptg.exceedsSpeedLimitCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The exceed speed limit cost is: " << exceeds_speed_limit_cost << std::endl;
-
-  // Test of "efficiencyCost" method
-  double efficiency_cost = ptg.efficiencyCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The efficiency cost is: " << efficiency_cost << std::endl;
-
-  // Test of "totalAccelSCost" method
-  double total_acc_s_cost = ptg.totalAccelSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The total acceleration cost (s) is: " << total_acc_s_cost << std::endl;
-
-  // Test of "totalAccelDCost" method
-  double total_acc_d_cost = ptg.totalAccelDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The total acceleration cost (d) is: " << total_acc_d_cost << std::endl;
-
-  // Test of "maxAccelSCost" method
-  double max_acc_s_cost = ptg.maxAccelSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The max acceleration cost (s) is: " << max_acc_s_cost << std::endl;
-
-  // Test of "maxAccelDCost" method
-  double max_acc_d_cost = ptg.maxAccelDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The max acceleration cost (d) is: " << max_acc_d_cost << std::endl;
-
-  // Tesf of "totalJerkSCost" method
-  double total_jerk_s_cost = ptg.totalJerkSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The total jerk cost (s) is: " << total_jerk_s_cost << std::endl;
-
-  // Tesf of "totalJerkDCost" method
-  double total_jerk_d_cost = ptg.totalJerkDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The total jerk cost (d) is: " << total_jerk_d_cost << std::endl;
-
-  // Tesf of "maxJerkSCost" method
-  double max_jerk_s_cost = ptg.maxJerkSCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The max jerk cost (s) is: " << max_jerk_s_cost << std::endl;
-
-  // Tesf of "maxJerkDCost" method
-  double max_jerk_d_cost = ptg.maxJerkDCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions);
-  std::cout << "The max jerk cost (d) is: " << max_jerk_d_cost << std::endl;
-
-  // Test of "calculateTotalCost" method
-  double total_cost = ptg.calculateTotalCost(test_trajectory, test_target_car_id, delta_car, time_given, predictions, true);
-  std::cout << "The total cost is : " << total_cost << std::endl;
 
   // Test of "perturbGoal" method
   std::vector<std::vector<double>> perturbed_end = ptg.perturbGoal(end_s, end_d);
@@ -292,7 +180,7 @@ void tests() {
                                                 perturbed_end_d[2] << ")" << std::endl;
   
   // Test of "best trajectory" method
-  trajInfo best_trajectory = ptg.getBestFollowTrajectory(start_s, start_d, test_target_car_id, delta_car, time_given, predictions);
+  trajInfo best_trajectory = ptg.getBestTrajectory(start_s, start_d, goal[0], goal[1], time_given, predictions);
 }
 
 
