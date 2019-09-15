@@ -150,6 +150,33 @@ src/PTG.cpp.s:
 	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/PTG.cpp.s
 .PHONY : src/PTG.cpp.s
 
+src/ego_vehicle.o: src/ego_vehicle.cpp.o
+
+.PHONY : src/ego_vehicle.o
+
+# target to build an object file
+src/ego_vehicle.cpp.o:
+	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o
+.PHONY : src/ego_vehicle.cpp.o
+
+src/ego_vehicle.i: src/ego_vehicle.cpp.i
+
+.PHONY : src/ego_vehicle.i
+
+# target to preprocess a source file
+src/ego_vehicle.cpp.i:
+	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.i
+.PHONY : src/ego_vehicle.cpp.i
+
+src/ego_vehicle.s: src/ego_vehicle.cpp.s
+
+.PHONY : src/ego_vehicle.s
+
+# target to generate assembly for a file
+src/ego_vehicle.cpp.s:
+	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.s
+.PHONY : src/ego_vehicle.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -216,6 +243,9 @@ help:
 	@echo "... src/PTG.o"
 	@echo "... src/PTG.i"
 	@echo "... src/PTG.s"
+	@echo "... src/ego_vehicle.o"
+	@echo "... src/ego_vehicle.i"
+	@echo "... src/ego_vehicle.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

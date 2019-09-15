@@ -1,0 +1,6 @@
+# Simulator data
+
+term3_sim_linux/
+
+# Ignore visual studio code data
+.vscode/

@@ -11,7 +11,7 @@
 #include "vehicle.h"
 #include "helpers.h"
 
-// This class is responsible of generating polynomial trajectories
+// PTG means Polynomial trajectory generator
 
 struct trajInfo {
   std::vector<double> s_coeffs;
