@@ -120,16 +120,16 @@ class PTG {
 
 
   private:
-    const double N_SAMPLES = 10;
-    const double SIGMA_S[3] = {10.0, 4.0, 2.0};
-    const double SIGMA_D[3] = {1.0, 1.0, 1.0};
+    const unsigned int N_SAMPLES = 10;
+    const double SIGMA_S[3] = {3.0, 1.0, 1.0};
+    const double SIGMA_D[3] = {0.5, 0.5, 0.5};
     const double SIGMA_T = 2.0;
     
-    const double MAX_JERK = 10;     // m/(s^3)
-    const double MAX_ACCEL = 10;    // m/(s^2)
+    const double MAX_JERK = 10.0;     // m/(s^3)
+    const double MAX_ACCEL = 10.0;    // m/(s^2)
 
-    const double EXPECTED_JERK_IN_ONE_SEC = 2; // m/(s^2)
-    const double EXPECTED_ACC_IN_ONE_SEC = 1;  // m/s
+    const double EXPECTED_JERK_IN_ONE_SEC = 2.0; // m/(s^2)
+    const double EXPECTED_ACC_IN_ONE_SEC = 1.0;  // m/s
 
     const double SPEED_LIMIT = 22.352;    // m/s (22.352 m/s = 50 mph)
     const double VEHICLE_RADIUS = 1.5;  // model vehicle as circle to simplify collision detection (change later)
@@ -138,19 +138,19 @@ class PTG {
 
     const double WEIGHT_TIME_DIFF = 70.0;
     const double WEIGHT_S_DIFF = 200.0;
-    const double WEIGHT_D_DIFF = 250.0;
+    const double WEIGHT_D_DIFF = 600.0;
     const double WEIGHT_COLLISION = 500.0;
     const double WEIGHT_BUFFER = 400.0;
     const double WEIGHT_GO_OUT_ROAD = 300.0;
     const double WEIGHT_EXCEED_SPEED_LIMIT = 400.0;
     const double WEIGHT_EFFICIENCY = 130.0;
-    const double WEIGHT_TOTAL_ACCEL_S = 130.0;
-    const double WEIGHT_TOTAL_ACCEL_D = 50.0;
-    const double WEIGHT_MAX_ACCEL_S = 120.0;
-    const double WEIGHT_MAX_ACCEL_D = 40.0;
-    const double WEIGHT_TOTAL_JERK_S = 350.0;
+    const double WEIGHT_TOTAL_ACCEL_S = 600.0;
+    const double WEIGHT_TOTAL_ACCEL_D = 550.0;
+    const double WEIGHT_MAX_ACCEL_S = 650.0;
+    const double WEIGHT_MAX_ACCEL_D = 500.0;
+    const double WEIGHT_TOTAL_JERK_S = 700.0;
     const double WEIGHT_TOTAL_JERK_D = 370.0;
-    const double WEIGHT_MAX_JERK_S = 340.0;
+    const double WEIGHT_MAX_JERK_S = 650.0;
     const double WEIGHT_MAX_JERK_D = 350.0;
 };
 

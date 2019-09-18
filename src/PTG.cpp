@@ -496,7 +496,7 @@ trajInfo PTG::getBestTrajectory(const vector<double> &startS, const vector<doubl
    for (unsigned int i = 0; i < all_goals_d.size(); i++) {
       trajInfo curr_trajectory;
       curr_trajectory.s_coeffs = JMT(startS, all_goals_s[i], all_times[i]);
-      curr_trajectory.d_coeffs = JMT(startS, all_goals_d[i], all_times[i]);
+      curr_trajectory.d_coeffs = JMT(startD, all_goals_d[i], all_times[i]);
       curr_trajectory.final_time = all_times[i];
       // It appends all the possible trajectories (its polynomic coefficients actually) in "trajectories"
       trajectories.push_back(curr_trajectory);

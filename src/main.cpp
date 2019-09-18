@@ -15,14 +15,14 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
-void writeToCSV (double first, double second) {
+void writeToCSV (double first, double second, double third, double fourth) {
   std::ofstream outputFile;
   std::string filename = "log.csv";
   outputFile.open(filename.c_str(), std::ios::out | std::ios::app);
   if (outputFile.fail()){
     std::cout << "Log failed to open" << std::endl;
   }
-  outputFile << first << " " << second << std::endl;
+  outputFile << first << " " << second << " " << third << " " << fourth << std::endl;
   outputFile.close();
 }
 
@@ -47,7 +47,7 @@ vector<vector<double>> readFromCSV () {
   return {x_values, y_values};
 }
 
-int main_proj() {
+int main() {
   uWS::Hub h;
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
@@ -114,7 +114,7 @@ int main_proj() {
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
-          writeToCSV(car_x, car_y);
+          writeToCSV(car_x, car_y, car_yaw, car_speed);
 
 
 
@@ -127,7 +127,7 @@ int main_proj() {
 
           // Sensor Fusion Data, a list of all other cars on the same side 
           //   of the road.
-          auto sensor_fusion = j[1]["sensor_fusion"];
+          vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
           json msgJson;
 
@@ -137,8 +137,11 @@ int main_proj() {
            * TODO: define a path made up of (x,y) points that the car will visit
            *   sequentially every .02 seconds
            */
-          next_xy_vals = ego_v.getCircularTraj(car_x, car_y, car_yaw, car_speed, previous_path_x, previous_path_y);
+          //next_xy_vals = ego_v.PTGkeepLineTraj(car_x, car_y, car_yaw, car_speed, previous_path_x, previous_path_y,
+          //                                  map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
+          next_xy_vals = ego_v.SplineTraj(car_x, car_y, car_yaw, car_speed, car_s, 
+                                      previous_path_x, previous_path_y, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
           msgJson["next_x"] = next_xy_vals[0];
           msgJson["next_y"] = next_xy_vals[1];
@@ -271,11 +274,19 @@ void tests_ego_vehicle_functions() {
   vector<vector<double>> Pos_xy_transf_values = ego_v.trajFrenetToXY(Pos_sd_values[0], Pos_sd_values[1], 
     map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
+  // Test of method "getVelocity"
+  vector<double> vel_s = ego_v.getVelocity(Pos_sd_values[0]);
+  vector<double> vel_d = ego_v.getVelocity(Pos_sd_values[1]);
+
+  // Test of method "getAcceleration"
+  vector<double> acc_s = ego_v.getAcceleration(vel_s);
+  vector<double> acc_d = ego_v.getAcceleration(vel_d);
+
   std::cout << "Test successfull" << std::endl;
 }
 
 
-int main() {
+int main_test() {
   //tests_traj_generation();
   tests_ego_vehicle_functions();
   return 0;

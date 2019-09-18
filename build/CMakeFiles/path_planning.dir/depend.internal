@@ -11,6 +11,7 @@ CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.h
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/helpers.h
+ /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/spline.h
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.h
 CMakeFiles/path_planning.dir/src/main.cpp.o
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/Eigen-3.3/Eigen/Cholesky
@@ -176,6 +177,7 @@ CMakeFiles/path_planning.dir/src/main.cpp.o
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/helpers.h
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/json.hpp
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp
+ /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/spline.h
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.h
 CMakeFiles/path_planning.dir/src/vehicle.cpp.o
  /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp
