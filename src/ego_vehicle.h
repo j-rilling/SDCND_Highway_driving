@@ -24,9 +24,11 @@ class ego_vehicle {
         const vector<double> &previousXpoints, const vector<double> &previousYpoints, 
         const vector<double> &mapsS, const vector<double> &mapsX, const vector<double> &mapsY);
 
-    vector<vector<double>> SplineTraj(double x0, double y0, double th0, double v0, double s0,
+    vector<vector<double>> SplineTraj(double x0, double y0, double th0, 
         const vector<double> &previousXpoints, const vector<double> &previousYpoints, 
         const vector<double> &mapsS, const vector<double> &mapsX, const vector<double> &mapsY);
+
+    void changeTrajectory(const vector<double> &previousXpoints, double s0, double endPathS, const vector<vector<double>> &otherCars);
 
     vector<vector<double>> trajXYToFrenet(const vector<double> &xPoints, const vector<double> &yPoints, 
         const vector<double> &thPoints, const vector<double> &mapsX, const vector<double> &mapsY);
@@ -39,6 +41,18 @@ class ego_vehicle {
     vector<double> getAcceleration(const vector<double> &velPoints);
     
     vector<double> getThetasFromXY(const vector<double> &xPoints, const vector<double> &yPoints);
+
+    bool getVehicleAhead(double lastPathSize, const vector<vector<double>> &otherVehicles, 
+                        unsigned int lane, vector<double> &vehicleFound);
+
+    bool getVehicleBehind(const vector<vector<double>> &otherVehicles, 
+                          unsigned int lane, vector<double> &vehicleFound);
+
+    vector<double> getKinematicsOfLane(double lastPathSize, const vector<vector<double>> &otherVehicles, unsigned int lane);
+
+    vector<double> keepLineTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
+
+
   private:
     PTG ptg;
 
@@ -57,6 +71,11 @@ class ego_vehicle {
 
     const double DESIRED_ACC = 1.0;
     const double DESIRED_JERK = 2.0;
+    const double DISTANCE_BUFFER = 30.0;
+
+    const double MAX_ACCEL = 10.0;
+    const double MAX_JERK = 10.0;
+
     unsigned int current_cycle; 
 
     double current_speed_s;
@@ -64,8 +83,12 @@ class ego_vehicle {
     double current_acc_s;
     double current_acc_d;
     unsigned int current_lane;
+    double current_pos_s;
 
-    double ref_speed_xy;
+    double target_speed_xy;
+    double current_speed_xy;
+    double target_acc_xy;
+    double current_acc_xy;
     
 
 };

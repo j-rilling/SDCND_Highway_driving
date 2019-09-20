@@ -139,9 +139,9 @@ int main() {
            */
           //next_xy_vals = ego_v.PTGkeepLineTraj(car_x, car_y, car_yaw, car_speed, previous_path_x, previous_path_y,
           //                                  map_waypoints_s, map_waypoints_x, map_waypoints_y);
-
-          next_xy_vals = ego_v.SplineTraj(car_x, car_y, car_yaw, car_speed, car_s, 
-                                      previous_path_x, previous_path_y, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          ego_v.changeTrajectory(previous_path_x, car_s, end_path_s, sensor_fusion);
+          next_xy_vals = ego_v.SplineTraj(car_x, car_y, car_yaw, previous_path_x, previous_path_y, 
+                                          map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
           msgJson["next_x"] = next_xy_vals[0];
           msgJson["next_y"] = next_xy_vals[1];
