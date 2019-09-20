@@ -50,7 +50,7 @@ class ego_vehicle {
 
     vector<double> getKinematicsOfLane(double lastPathSize, const vector<vector<double>> &otherVehicles, unsigned int lane);
 
-    vector<double> keepLineTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
+    vector<double> keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
 
 
   private:

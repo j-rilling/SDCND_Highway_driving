@@ -423,10 +423,23 @@ void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double
     else {
         current_pos_s = s0;
     }
-    vector<double> vehicle_found;
+    vector<double> new_vel_acc = keepLaneTraj(last_path_size, otherCars);
 
+    if (current_acc_xy < new_vel_acc[1]) {
+        current_acc_xy += 10.0*TIME_STEP;
+    }
+    else if (current_acc_xy > new_vel_acc[1]) {
+        current_acc_xy -= 10.0*TIME_STEP;
+    }
 
-    
+    if (current_speed_xy < new_vel_acc[0]) {
+        current_speed_xy += abs(current_acc_xy)*TIME_STEP;
+    }
+    else if (current_speed_xy > new_vel_acc[0]) {
+        current_speed_xy -= abs(current_acc_xy)*TIME_STEP;
+    }
+
+    /*
     car_too_close = getVehicleAhead(last_path_size, otherCars, this->current_lane, vehicle_found);
     if (car_too_close) {
         current_acc_xy -= 10.0*TIME_STEP;
@@ -438,7 +451,7 @@ void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double
             current_acc_xy += 10.0*TIME_STEP;
         }
         current_speed_xy += 10.0*TIME_STEP;
-    }
+    }*/
 }
 
 bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<double>> &otherVehicles, 
@@ -450,6 +463,7 @@ bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<doubl
     // the last one with current speed and is replaced by the position of cars found at the current
     // lane of the ego car.
     double min_s = this->current_pos_s + static_cast<double>(lastPathSize)*0.02*this->current_speed_xy;
+    double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
 
     for (unsigned int i = 0; i < otherVehicles.size(); i++) {
         // If other car is in current lane of ego car
@@ -457,7 +471,7 @@ bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<doubl
         if (other_vehicle_d < (2+4*this->current_lane+2) && other_vehicle_d > (2+4*this->current_lane-2)) {
             double other_vehicle_s = otherVehicles[i][5];
             // Check s values greather than of ego car and smaller than min s
-            if ((other_vehicle_s > this->current_pos_s) && (other_vehicle_s < min_s)) {
+            if ((other_vehicle_s > real_pos_car) && (other_vehicle_s < min_s)) {
                 found_vehicle = true;
                 min_s = other_vehicle_s;
                 vehicleFound = otherVehicles[i];
@@ -473,6 +487,7 @@ bool ego_vehicle::getVehicleBehind(const vector<vector<double>> &otherVehicles,
     // The found vehicle is passed as reference through "vehicleFound"                 
     bool found_vehicle = false;
     double max_s = -1;
+    double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
 
     for (unsigned int i = 0; i < otherVehicles.size(); i++) {
         // If other car is in current lane of ego car
@@ -480,7 +495,7 @@ bool ego_vehicle::getVehicleBehind(const vector<vector<double>> &otherVehicles,
         if (other_vehicle_d < (2+4*this->current_lane+2) && other_vehicle_d > (2+4*this->current_lane-2)) {
             double other_vehicle_s = otherVehicles[i][5];
             // Check s values smaller than of ego car and bigger than max s
-            if ((other_vehicle_s < this->current_pos_s) && (other_vehicle_s > max_s)) {
+            if ((other_vehicle_s < real_pos_car) && (other_vehicle_s > max_s)) {
                 found_vehicle = true;
                 max_s = other_vehicle_s;
                 vehicleFound = otherVehicles[i];
@@ -501,18 +516,15 @@ vector<double> ego_vehicle::getKinematicsOfLane(double lastPathSize, const vecto
     vector<double> vehicle_ahead;
     vector<double> vehicle_behind;
 
+    double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
+
     if (getVehicleAhead(lastPathSize, otherVehicles, lane, vehicle_ahead)) {
         std::cout << "Vehicle detected ahead" << std::endl;
-        double vehicle_ahead_velocity = sqrt(pow(vehicle_ahead[3],2)+pow(vehicle_ahead[3],2));
-        if (getVehicleBehind(otherVehicles, lane, vehicle_behind)) {
-            // If there is a car ahead AND behind the ego car will travel with velocity of car ahead
-            new_velocity = vehicle_ahead_velocity;
-        }
-        else {
-            double max_velocity_in_front = (vehicle_ahead[5] - this->current_pos_s - this->DISTANCE_BUFFER) + 
-                                            vehicle_ahead_velocity - 0.5*this->current_acc_xy;
-            new_velocity = std::min(std::min(max_velocity_in_front, max_velocity_with_accel_limit), this->target_speed_xy);
-        }
+        double vehicle_ahead_velocity = sqrt(pow(vehicle_ahead[3],2)+pow(vehicle_ahead[4],2));
+        double vehicle_ahead_s = vehicle_ahead[5];
+        double max_velocity_in_front = (vehicle_ahead_s - real_pos_car - this->DISTANCE_BUFFER) + 
+                                            vehicle_ahead_velocity - 0.5*abs(this->current_acc_xy);
+        new_velocity = std::min(std::min(max_velocity_in_front, max_velocity_with_accel_limit), this->target_speed_xy);
     } 
     else {
         new_velocity = std::min(max_velocity_with_accel_limit, this->target_speed_xy);
@@ -523,7 +535,7 @@ vector<double> ego_vehicle::getKinematicsOfLane(double lastPathSize, const vecto
     return {new_velocity, new_acceleration};
 }
 
-vector<double> ego_vehicle::keepLineTraj(double lastPathSize, const vector<vector<double>> &otherVehicles) {
+vector<double> ego_vehicle::keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles) {
     vector<double> newVelAcc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
     return newVelAcc;
 }
