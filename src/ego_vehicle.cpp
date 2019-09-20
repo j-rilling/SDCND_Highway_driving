@@ -12,6 +12,7 @@ ego_vehicle::ego_vehicle() {
     current_speed_xy = 0.0;
     target_acc_xy = 10.0*TIME_STEP;
     current_acc_xy = 0.0*TIME_STEP;
+    FSM_state = "KL";
 }
 
 ego_vehicle::~ego_vehicle() {
@@ -423,19 +424,30 @@ void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double
     else {
         current_pos_s = s0;
     }
-    vector<double> new_vel_acc = keepLaneTraj(last_path_size, otherCars);
+    // trajectoryInfo new_trajectory = keepLaneTraj(last_path_size, otherCars);
+    // trajectoryInfo new_trajectory = prepLaneChangeTraj("PLCR", last_path_size, otherCars);
+    string next_state;
+    if (this->current_lane == 1) {
+        next_state = "LCR";
+    }
+    else if (this->current_lane == 2) {
+        next_state = "LCL";
+    }
 
-    if (current_acc_xy < new_vel_acc[1]) {
+    trajectoryInfo new_trajectory = laneChangeTraj(next_state, last_path_size, otherCars);
+    this->current_lane = new_trajectory.lane;
+
+    if (current_acc_xy < new_trajectory.acceleration) {
         current_acc_xy += 10.0*TIME_STEP;
     }
-    else if (current_acc_xy > new_vel_acc[1]) {
+    else if (current_acc_xy > new_trajectory.acceleration) {
         current_acc_xy -= 10.0*TIME_STEP;
     }
 
-    if (current_speed_xy < new_vel_acc[0]) {
+    if (current_speed_xy < new_trajectory.velocity) {
         current_speed_xy += abs(current_acc_xy)*TIME_STEP;
     }
-    else if (current_speed_xy > new_vel_acc[0]) {
+    else if (current_speed_xy > new_trajectory.velocity) {
         current_speed_xy -= abs(current_acc_xy)*TIME_STEP;
     }
 
@@ -463,12 +475,14 @@ bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<doubl
     // the last one with current speed and is replaced by the position of cars found at the current
     // lane of the ego car.
     double min_s = this->current_pos_s + static_cast<double>(lastPathSize)*0.02*this->current_speed_xy;
+    // This value corresponds to the s value of the front of the car, since "current_pos_s" actually has the 
+    // s value at the end of the already planned trajectory (the green points shown on the simulator)
     double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
 
     for (unsigned int i = 0; i < otherVehicles.size(); i++) {
         // If other car is in current lane of ego car
         double other_vehicle_d = otherVehicles[i][6];
-        if (other_vehicle_d < (2+4*this->current_lane+2) && other_vehicle_d > (2+4*this->current_lane-2)) {
+        if (other_vehicle_d < (2+4*lane+2) && other_vehicle_d > (2+4*lane-2)) {
             double other_vehicle_s = otherVehicles[i][5];
             // Check s values greather than of ego car and smaller than min s
             if ((other_vehicle_s > real_pos_car) && (other_vehicle_s < min_s)) {
@@ -486,13 +500,16 @@ bool ego_vehicle::getVehicleBehind(const vector<vector<double>> &otherVehicles,
     // Returns true if a vehicle is found behind of the ego vehicle, false otherwise
     // The found vehicle is passed as reference through "vehicleFound"                 
     bool found_vehicle = false;
-    double max_s = -1;
+    // This value corresponds to the s value of the front of the car, since "current_pos_s" actually has the 
+    // s value at the end of the already planned trajectory (the green points shown on the simulator)
     double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
+
+    double max_s = real_pos_car - this->SEARCH_RANGE;
 
     for (unsigned int i = 0; i < otherVehicles.size(); i++) {
         // If other car is in current lane of ego car
         double other_vehicle_d = otherVehicles[i][6];
-        if (other_vehicle_d < (2+4*this->current_lane+2) && other_vehicle_d > (2+4*this->current_lane-2)) {
+        if (other_vehicle_d < (2+4*lane+2) && other_vehicle_d > (2+4*lane-2)) {
             double other_vehicle_s = otherVehicles[i][5];
             // Check s values smaller than of ego car and bigger than max s
             if ((other_vehicle_s < real_pos_car) && (other_vehicle_s > max_s)) {
@@ -515,15 +532,24 @@ vector<double> ego_vehicle::getKinematicsOfLane(double lastPathSize, const vecto
     double new_acceleration;
     vector<double> vehicle_ahead;
     vector<double> vehicle_behind;
-
+    // This value corresponds to the s value of the front of the car, since "current_pos_s" actually has the 
+    // s value at the end of the already planned trajectory (the green points shown on the simulator)
     double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
 
     if (getVehicleAhead(lastPathSize, otherVehicles, lane, vehicle_ahead)) {
-        std::cout << "Vehicle detected ahead" << std::endl;
+        //std::cout << "Vehicle detected ahead" << std::endl;
         double vehicle_ahead_velocity = sqrt(pow(vehicle_ahead[3],2)+pow(vehicle_ahead[4],2));
         double vehicle_ahead_s = vehicle_ahead[5];
+        // The max velocity of the ego vehicle if another vehicle is ahead of it is determined by 
+        // the velocity of that detected vehicle plus the distance between the two vehicles minus a distance buffer 
+        // That means, that if the distance between the two vehicles is exactly equal to the distance buffer, the ego vehicle 
+        // will take the velocity of the other vehicle, if this distance is smaller than the buffer, the velocity will get 
+        // smaller and if the distance is bigger than the buffer, the velocity will get bigger. This is subtracted by half the 
+        // current acceleration of the ego vehicle in order to compensate the change on the velocity.
         double max_velocity_in_front = (vehicle_ahead_s - real_pos_car - this->DISTANCE_BUFFER) + 
                                             vehicle_ahead_velocity - 0.5*abs(this->current_acc_xy);
+        // That calculated velocity gets capped by the maximum possible velocity the vehicle can produce with the maximum
+        // acceleration and by the target speed.
         new_velocity = std::min(std::min(max_velocity_in_front, max_velocity_with_accel_limit), this->target_speed_xy);
     } 
     else {
@@ -535,7 +561,76 @@ vector<double> ego_vehicle::getKinematicsOfLane(double lastPathSize, const vecto
     return {new_velocity, new_acceleration};
 }
 
-vector<double> ego_vehicle::keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles) {
-    vector<double> newVelAcc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
-    return newVelAcc;
+// Method for trajectory generation for state "keep lane (KL)"
+trajectoryInfo ego_vehicle::keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles) {
+    vector<double> new_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
+    trajectoryInfo new_trajectory;
+    new_trajectory.lane = this->current_lane;
+    new_trajectory.velocity = new_vel_acc[0];
+    new_trajectory.acceleration = new_vel_acc[1];
+    new_trajectory.state = "KL";
+    return new_trajectory;
+}
+
+// Method for trajectory generation for states "Prepare lane change left (PLCL)" and "Prepare lane change right (PLCR)"
+// On this state the ego vehicle takes the speed and acceleration of the lane it wants to change, but that only if this 
+// speed is slower than the one of the current lane, so the vehicle in front of the ego vehicle does not get hit.
+// Also if a vehicle behind is detected the current speed and acceleration are kept so the vehicle behind don't crash
+// with the ego vehicle.
+trajectoryInfo ego_vehicle::prepLaneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles) {
+    trajectoryInfo new_trajectory;
+    new_trajectory.lane = this->current_lane;
+    new_trajectory.state = state;
+
+    // "new_lane" depends on the "state" given to this method, since this method is used for PCLC and PLCR.
+    unsigned int new_lane = this->current_lane + this->lane_direction[state];
+
+    vector<double> curr_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
+    vector<double> vehicle_behind;
+    if (getVehicleBehind(otherVehicles, this->current_lane, vehicle_behind)) {
+        // If there is a car behind the ego vehicle, the speed and acceleration are kept so the car behind does not get hit
+        // std::cout << "Car behind, kinematics of current lane kept" << std::endl;
+        new_trajectory.velocity = curr_lane_vel_acc[0];
+        new_trajectory.acceleration = curr_lane_vel_acc[1];
+
+    }
+    else {
+        vector<double> best_vel_acc;
+        vector<double> next_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, new_lane);
+        // std::cout << "Next lane v: " << next_lane_vel_acc[0] << " , current lane v: " << curr_lane_vel_acc[0] << std::endl;
+        if(next_lane_vel_acc[0] < curr_lane_vel_acc[0]) {
+            // std::cout << "No car behind, kinematics of lane " << new_lane << "taken" << std::endl;
+            best_vel_acc = next_lane_vel_acc;
+        }
+        else {
+            // std::cout << "No car behind, kinematics of current lane kept" << std::endl;
+            best_vel_acc = curr_lane_vel_acc;
+        }
+        new_trajectory.velocity = best_vel_acc[0];
+        new_trajectory.acceleration = best_vel_acc[1];
+    }
+    return new_trajectory;
+}
+
+trajectoryInfo ego_vehicle::laneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles) {
+    trajectoryInfo new_trajectory;
+    new_trajectory.state = state;
+    unsigned int new_lane = this->current_lane + this->lane_direction[state];
+    vector<double> vehicle_ahead_new_lane;
+    // Checks if a lane change is possible (if there is not a car over there)
+    if (getVehicleAhead(lastPathSize, otherVehicles, new_lane, vehicle_ahead_new_lane)) {
+        std::cout << "Lane occupied. Stay on current lane" << std::endl;
+        vector<double> old_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
+        new_trajectory.velocity = old_lane_vel_acc[0];
+        new_trajectory.acceleration = old_lane_vel_acc[1];
+        new_trajectory.lane = this->current_lane;
+    }
+    else {
+        std::cout << "Changing to new lane" << std::endl;
+        vector<double> new_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, new_lane);
+        new_trajectory.velocity = new_lane_vel_acc[0];
+        new_trajectory.acceleration = new_lane_vel_acc[1];
+        new_trajectory.lane = new_lane;
+    }
+    return new_trajectory;   
 }

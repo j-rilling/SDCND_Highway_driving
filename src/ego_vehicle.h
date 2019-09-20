@@ -4,6 +4,7 @@
 #include "PTG.h"
 #include "helpers.h"
 #include <vector>
+#include <map>
 #include <list>
 #include <cmath>
 #include <algorithm>
@@ -11,6 +12,13 @@
 
 using std::vector;
 using std::list;
+
+struct trajectoryInfo {
+        unsigned int lane;
+        double velocity;
+        double acceleration;
+        string state;
+};  
 
 class ego_vehicle {
   public:
@@ -50,7 +58,9 @@ class ego_vehicle {
 
     vector<double> getKinematicsOfLane(double lastPathSize, const vector<vector<double>> &otherVehicles, unsigned int lane);
 
-    vector<double> keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
+    trajectoryInfo keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
+    trajectoryInfo prepLaneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
+    trajectoryInfo laneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
 
 
   private:
@@ -72,6 +82,7 @@ class ego_vehicle {
     const double DESIRED_ACC = 1.0;
     const double DESIRED_JERK = 2.0;
     const double DISTANCE_BUFFER = 30.0;
+    const double SEARCH_RANGE = 30.0;
 
     const double MAX_ACCEL = 10.0;
     const double MAX_JERK = 10.0;
@@ -89,7 +100,11 @@ class ego_vehicle {
     double current_speed_xy;
     double target_acc_xy;
     double current_acc_xy;
-    
+
+    std::map<string, int> lane_direction = {{"PLCL", -1}, {"LCL", -1}, 
+                                            {"LCR", 1}, {"PLCR", 1}};
+
+    string FSM_state;   
 
 };
 
