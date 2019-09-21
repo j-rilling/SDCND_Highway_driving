@@ -61,6 +61,8 @@ class ego_vehicle {
     trajectoryInfo keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles);
     trajectoryInfo prepLaneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
     trajectoryInfo laneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
+    trajectoryInfo generateStateTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
+    vector<string> possibleNextStates();
 
 
   private:
@@ -82,10 +84,12 @@ class ego_vehicle {
     const double DESIRED_ACC = 1.0;
     const double DESIRED_JERK = 2.0;
     const double DISTANCE_BUFFER = 30.0;
-    const double SEARCH_RANGE = 30.0;
+    const double SEARCH_RANGE = 20.0;
 
     const double MAX_ACCEL = 10.0;
     const double MAX_JERK = 10.0;
+
+    unsigned int lanes_quantity;
 
     unsigned int current_cycle; 
 
@@ -93,7 +97,7 @@ class ego_vehicle {
     double current_speed_d;
     double current_acc_s;
     double current_acc_d;
-    unsigned int current_lane;
+    int current_lane;
     double current_pos_s;
 
     double target_speed_xy;
@@ -104,7 +108,7 @@ class ego_vehicle {
     std::map<string, int> lane_direction = {{"PLCL", -1}, {"LCL", -1}, 
                                             {"LCR", 1}, {"PLCR", 1}};
 
-    string FSM_state;   
+    string current_FSM_state;   
 
 };
 

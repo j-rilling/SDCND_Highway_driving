@@ -1,6 +1,7 @@
 #include "ego_vehicle.h"
 
 ego_vehicle::ego_vehicle() {
+    lanes_quantity = 3;
     current_cycle = 1;
     current_speed_s = 0.0;
     current_speed_d = 0.0;
@@ -12,7 +13,7 @@ ego_vehicle::ego_vehicle() {
     current_speed_xy = 0.0;
     target_acc_xy = 10.0*TIME_STEP;
     current_acc_xy = 0.0*TIME_STEP;
-    FSM_state = "KL";
+    current_FSM_state = "KL";
 }
 
 ego_vehicle::~ego_vehicle() {
@@ -345,9 +346,9 @@ vector<vector<double>> ego_vehicle::SplineTraj(double x0, double y0, double th0,
     }
 
     // In Frenet add evenly 30m spaced points ahead of the starting reference
-    vector<double> new_spline_point_1 = getXY(current_pos_s + 30,(2+4*current_lane), mapsS, mapsX, mapsY);
-    vector<double> new_spline_point_2 = getXY(current_pos_s + 60,(2+4*current_lane), mapsS, mapsX, mapsY);
-    vector<double> new_spline_point_3 = getXY(current_pos_s + 90,(2+4*current_lane), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_1 = getXY(current_pos_s + 30,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_2 = getXY(current_pos_s + 60,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_3 = getXY(current_pos_s + 90,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
 
     points_spline_x.push_back(new_spline_point_1[0]);
     points_spline_x.push_back(new_spline_point_2[0]);
@@ -357,6 +358,7 @@ vector<vector<double>> ego_vehicle::SplineTraj(double x0, double y0, double th0,
     points_spline_y.push_back(new_spline_point_2[1]);
     points_spline_y.push_back(new_spline_point_3[1]);
 
+
     // Shift car reference angle to 0 degrees
     for (unsigned int i = 0; i < points_spline_x.size(); i++) {
         double shift_x = points_spline_x[i] - ref_x;
@@ -364,6 +366,15 @@ vector<vector<double>> ego_vehicle::SplineTraj(double x0, double y0, double th0,
 
         points_spline_x[i] = shift_x*cos(0 - ref_yaw) - shift_y*sin(0 - ref_yaw);
         points_spline_y[i] = shift_x*sin(0 - ref_yaw) + shift_y*cos(0 - ref_yaw);
+    }
+
+    // Deletes possible duplicated interpolation points for the spline function
+    // in order to avoid errors with the interpolation
+    for (unsigned int i = 0; i < points_spline_x.size() - 1; i++) {
+        if (points_spline_x[i] == points_spline_x[i+1]) {
+            points_spline_x.erase(points_spline_x.begin()+i);
+            points_spline_y.erase(points_spline_y.begin()+i);
+        }
     }
 
     // Create a spline
@@ -424,17 +435,26 @@ void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double
     else {
         current_pos_s = s0;
     }
-    // trajectoryInfo new_trajectory = keepLaneTraj(last_path_size, otherCars);
-    // trajectoryInfo new_trajectory = prepLaneChangeTraj("PLCR", last_path_size, otherCars);
+    
+    
     string next_state;
     if (this->current_lane == 1) {
         next_state = "LCR";
     }
     else if (this->current_lane == 2) {
         next_state = "LCL";
+    } 
+    trajectoryInfo new_trajectory = generateStateTraj(next_state, last_path_size, otherCars);
+    
+    // Test of "possibleNextStates"
+    this->current_FSM_state = new_trajectory.state;
+    std::cout << "Current state: " << this->current_FSM_state << std::endl << "Next possible states: ";
+    vector<string> next_possible_states = possibleNextStates();
+    for (unsigned int i = 0; i < next_possible_states.size(); i++) {
+        std::cout << next_possible_states[i] << " , ";
     }
+    std::cout << std::endl;
 
-    trajectoryInfo new_trajectory = laneChangeTraj(next_state, last_path_size, otherCars);
     this->current_lane = new_trajectory.lane;
 
     if (current_acc_xy < new_trajectory.acceleration) {
@@ -450,20 +470,6 @@ void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double
     else if (current_speed_xy > new_trajectory.velocity) {
         current_speed_xy -= abs(current_acc_xy)*TIME_STEP;
     }
-
-    /*
-    car_too_close = getVehicleAhead(last_path_size, otherCars, this->current_lane, vehicle_found);
-    if (car_too_close) {
-        current_acc_xy -= 10.0*TIME_STEP;
-        current_speed_xy -= current_acc_xy*TIME_STEP;
-        current_lane = (current_lane + 1)%3;
-    }
-    else if (current_speed_xy < target_speed_xy) {
-        if (current_acc_xy < target_acc_xy) {
-            current_acc_xy += 10.0*TIME_STEP;
-        }
-        current_speed_xy += 10.0*TIME_STEP;
-    }*/
 }
 
 bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<double>> &otherVehicles, 
@@ -617,20 +623,64 @@ trajectoryInfo ego_vehicle::laneChangeTraj(string state, double lastPathSize, co
     new_trajectory.state = state;
     unsigned int new_lane = this->current_lane + this->lane_direction[state];
     vector<double> vehicle_ahead_new_lane;
+    vector<double> vehicle_behind_new_lane;
     // Checks if a lane change is possible (if there is not a car over there)
-    if (getVehicleAhead(lastPathSize, otherVehicles, new_lane, vehicle_ahead_new_lane)) {
-        std::cout << "Lane occupied. Stay on current lane" << std::endl;
+    if (getVehicleAhead(lastPathSize, otherVehicles, new_lane, vehicle_ahead_new_lane) || 
+        getVehicleBehind(otherVehicles, new_lane, vehicle_behind_new_lane)) {
+        //std::cout << "Lane occupied. Stay on current lane" << std::endl;
         vector<double> old_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
         new_trajectory.velocity = old_lane_vel_acc[0];
         new_trajectory.acceleration = old_lane_vel_acc[1];
         new_trajectory.lane = this->current_lane;
     }
     else {
-        std::cout << "Changing to new lane" << std::endl;
+        //std::cout << "Changing to new lane" << std::endl;
         vector<double> new_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, new_lane);
         new_trajectory.velocity = new_lane_vel_acc[0];
         new_trajectory.acceleration = new_lane_vel_acc[1];
         new_trajectory.lane = new_lane;
     }
     return new_trajectory;   
+}
+
+// Selects the correct trajectory generation method based on a given FSM state
+trajectoryInfo ego_vehicle::generateStateTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles) {
+    trajectoryInfo new_trajectory;
+    if (state.compare("KL")==0) {
+        new_trajectory = keepLaneTraj(lastPathSize, otherVehicles);
+    }
+    else if (state.compare("LCL") == 0 || state.compare("LCR") == 0) {
+        new_trajectory = laneChangeTraj(state, lastPathSize, otherVehicles);
+    }
+    else if (state.compare("PLCL") == 0 || state.compare("PLCR") == 0) {
+        new_trajectory = prepLaneChangeTraj(state, lastPathSize, otherVehicles);
+    }
+    return new_trajectory;
+}
+
+// Returns a vector with all the possible next FSM states based on the current state
+vector<string> ego_vehicle::possibleNextStates() {
+    vector<string> next_states;
+    next_states.push_back("KL");
+    if (this->current_FSM_state.compare("KL") == 0) {
+        if (this->current_lane < 1) {
+            next_states.push_back("PLCR");
+        }
+        else if (this->current_lane >= (this->lanes_quantity - 1)) {
+            next_states.push_back("PLCL");
+        }
+        else {
+            next_states.push_back("PLCR");
+            next_states.push_back("PLCL");
+        }
+    }    
+    else if (this->current_FSM_state.compare("PLCL") == 0) {
+        next_states.push_back("PLCL");
+        next_states.push_back("LCL");
+    }
+    else if (this->current_FSM_state.compare("PLCR") == 0) {
+        next_states.push_back("PLCR");
+        next_states.push_back("LCR");
+    }
+    return next_states;
 }
