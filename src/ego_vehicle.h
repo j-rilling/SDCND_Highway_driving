@@ -14,7 +14,11 @@ using std::vector;
 using std::list;
 
 struct trajectoryInfo {
-        unsigned int lane;
+        unsigned int start_lane;
+        unsigned int intended_lane;
+        unsigned int final_lane;
+        double start_s;
+        double end_s;
         double velocity;
         double acceleration;
         string state;
@@ -36,8 +40,8 @@ class ego_vehicle {
         const vector<double> &previousXpoints, const vector<double> &previousYpoints, 
         const vector<double> &mapsS, const vector<double> &mapsX, const vector<double> &mapsY);
 
-    void changeTrajectory(const vector<double> &previousXpoints, double s0, double endPathS, const vector<vector<double>> &otherCars);
-
+    void updateTrajectory(const vector<double> &previousXpoints, double s0, double endPathS, const vector<vector<double>> &otherCars);
+    
     vector<vector<double>> trajXYToFrenet(const vector<double> &xPoints, const vector<double> &yPoints, 
         const vector<double> &thPoints, const vector<double> &mapsX, const vector<double> &mapsY);
     
@@ -63,6 +67,16 @@ class ego_vehicle {
     trajectoryInfo laneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
     trajectoryInfo generateStateTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles);
     vector<string> possibleNextStates();
+    
+    // Cost functions
+    double avgLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
+    double NextCarOnLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
+    double getLaneAvgSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane);
+    double getNextCarOnLaneSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane);
+    double getTotalCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
+
+    // Select new FSM state and returns the corresponding trajectory
+    trajectoryInfo chooseNewState(double lastPathSize, const vector<vector<double>> &otherVehicles);
 
 
   private:
@@ -89,6 +103,9 @@ class ego_vehicle {
     const double MAX_ACCEL = 10.0;
     const double MAX_JERK = 10.0;
 
+    const double WEIGHT_AVG_LANE_SPEED = 500.0;
+    const double WEIGHT_NEXT_CAR_ON_LANE_SPEED = 600.0;
+
     unsigned int lanes_quantity;
 
     unsigned int current_cycle; 
@@ -111,5 +128,7 @@ class ego_vehicle {
     string current_FSM_state;   
 
 };
+
+typedef double (ego_vehicle::*costFunction_ego) (trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
 
 #endif // _EGO_VEHICLE_H_

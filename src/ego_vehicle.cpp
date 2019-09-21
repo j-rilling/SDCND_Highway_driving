@@ -346,9 +346,12 @@ vector<vector<double>> ego_vehicle::SplineTraj(double x0, double y0, double th0,
     }
 
     // In Frenet add evenly 30m spaced points ahead of the starting reference
-    vector<double> new_spline_point_1 = getXY(current_pos_s + 30,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
-    vector<double> new_spline_point_2 = getXY(current_pos_s + 60,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
-    vector<double> new_spline_point_3 = getXY(current_pos_s + 90,(2.0+4.0*static_cast<double>(current_lane)), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_1 = getXY(this->current_pos_s + 30,
+                                              (2.0+4.0*static_cast<double>(this->current_lane)), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_2 = getXY(this->current_pos_s + 60,
+                                              (2.0+4.0*static_cast<double>(this->current_lane)), mapsS, mapsX, mapsY);
+    vector<double> new_spline_point_3 = getXY(this->current_pos_s + 90,
+                                              (2.0+4.0*static_cast<double>(this->current_lane)), mapsS, mapsX, mapsY);
 
     points_spline_x.push_back(new_spline_point_1[0]);
     points_spline_x.push_back(new_spline_point_2[0]);
@@ -424,51 +427,32 @@ vector<vector<double>> ego_vehicle::SplineTraj(double x0, double y0, double th0,
     return {next_x_vals, next_y_vals};
 }
 
-void ego_vehicle::changeTrajectory(const vector<double> &previousXpoints, double s0, 
+void ego_vehicle::updateTrajectory(const vector<double> &previousXpoints, double s0, 
                             double endPathS, const vector<vector<double>> &otherCars) {
     unsigned int last_path_size = previousXpoints.size();
-    bool car_too_close = false;
 
     if (last_path_size > 0) {
-        current_pos_s = endPathS;
+        this->current_pos_s = endPathS;
     }
     else {
-        current_pos_s = s0;
+        this->current_pos_s = s0;
     }
     
-    
-    string next_state;
-    if (this->current_lane == 1) {
-        next_state = "LCR";
-    }
-    else if (this->current_lane == 2) {
-        next_state = "LCL";
-    } 
-    trajectoryInfo new_trajectory = generateStateTraj(next_state, last_path_size, otherCars);
-    
-    // Test of "possibleNextStates"
-    this->current_FSM_state = new_trajectory.state;
-    std::cout << "Current state: " << this->current_FSM_state << std::endl << "Next possible states: ";
-    vector<string> next_possible_states = possibleNextStates();
-    for (unsigned int i = 0; i < next_possible_states.size(); i++) {
-        std::cout << next_possible_states[i] << " , ";
-    }
-    std::cout << std::endl;
+    trajectoryInfo new_trajectory = chooseNewState(last_path_size, otherCars);
+    this->current_lane = new_trajectory.final_lane;
 
-    this->current_lane = new_trajectory.lane;
-
-    if (current_acc_xy < new_trajectory.acceleration) {
-        current_acc_xy += 10.0*TIME_STEP;
+    if (this->current_acc_xy < new_trajectory.acceleration) {
+        this->current_acc_xy += 10.0*TIME_STEP;
     }
-    else if (current_acc_xy > new_trajectory.acceleration) {
-        current_acc_xy -= 10.0*TIME_STEP;
+    else if (this->current_acc_xy > new_trajectory.acceleration) {
+        this->current_acc_xy -= 10.0*TIME_STEP;
     }
 
-    if (current_speed_xy < new_trajectory.velocity) {
-        current_speed_xy += abs(current_acc_xy)*TIME_STEP;
+    if (this->current_speed_xy < new_trajectory.velocity) {
+        this->current_speed_xy += abs(this->current_acc_xy)*TIME_STEP;
     }
-    else if (current_speed_xy > new_trajectory.velocity) {
-        current_speed_xy -= abs(current_acc_xy)*TIME_STEP;
+    else if (this->current_speed_xy > new_trajectory.velocity) {
+        this->current_speed_xy -= abs(this->current_acc_xy)*TIME_STEP;
     }
 }
 
@@ -480,7 +464,7 @@ bool ego_vehicle::getVehicleAhead(double lastPathSize, const vector<vector<doubl
     // Min s starts being the expected position of the ego car with a trajectory exactly as long as
     // the last one with current speed and is replaced by the position of cars found at the current
     // lane of the ego car.
-    double min_s = this->current_pos_s + static_cast<double>(lastPathSize)*0.02*this->current_speed_xy;
+    double min_s = this->current_pos_s + static_cast<double>(50 - lastPathSize)*0.02*this->current_speed_xy;
     // This value corresponds to the s value of the front of the car, since "current_pos_s" actually has the 
     // s value at the end of the already planned trajectory (the green points shown on the simulator)
     double real_pos_car = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
@@ -571,8 +555,12 @@ vector<double> ego_vehicle::getKinematicsOfLane(double lastPathSize, const vecto
 trajectoryInfo ego_vehicle::keepLaneTraj(double lastPathSize, const vector<vector<double>> &otherVehicles) {
     vector<double> new_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
     trajectoryInfo new_trajectory;
-    new_trajectory.lane = this->current_lane;
+    new_trajectory.start_lane = this->current_lane;
+    new_trajectory.intended_lane = this->current_lane;
+    new_trajectory.final_lane = this->current_lane;
+    new_trajectory.start_s = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
     new_trajectory.velocity = new_vel_acc[0];
+    new_trajectory.end_s = this->current_pos_s + static_cast<double>(50 - lastPathSize)*0.02*new_trajectory.velocity;
     new_trajectory.acceleration = new_vel_acc[1];
     new_trajectory.state = "KL";
     return new_trajectory;
@@ -585,11 +573,14 @@ trajectoryInfo ego_vehicle::keepLaneTraj(double lastPathSize, const vector<vecto
 // with the ego vehicle.
 trajectoryInfo ego_vehicle::prepLaneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles) {
     trajectoryInfo new_trajectory;
-    new_trajectory.lane = this->current_lane;
+    new_trajectory.start_lane = this->current_lane;
+    new_trajectory.final_lane = this->current_lane;
     new_trajectory.state = state;
+    new_trajectory.start_s = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
 
     // "new_lane" depends on the "state" given to this method, since this method is used for PCLC and PLCR.
     unsigned int new_lane = this->current_lane + this->lane_direction[state];
+    new_trajectory.intended_lane = new_lane;
 
     vector<double> curr_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
     vector<double> vehicle_behind;
@@ -615,12 +606,15 @@ trajectoryInfo ego_vehicle::prepLaneChangeTraj(string state, double lastPathSize
         new_trajectory.velocity = best_vel_acc[0];
         new_trajectory.acceleration = best_vel_acc[1];
     }
+    new_trajectory.end_s = this->current_pos_s + static_cast<double>(50 - lastPathSize)*0.02*new_trajectory.velocity;
     return new_trajectory;
 }
 
 trajectoryInfo ego_vehicle::laneChangeTraj(string state, double lastPathSize, const vector<vector<double>> &otherVehicles) {
     trajectoryInfo new_trajectory;
     new_trajectory.state = state;
+    new_trajectory.start_lane = this->current_lane;
+    new_trajectory.start_s = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
     unsigned int new_lane = this->current_lane + this->lane_direction[state];
     vector<double> vehicle_ahead_new_lane;
     vector<double> vehicle_behind_new_lane;
@@ -629,17 +623,20 @@ trajectoryInfo ego_vehicle::laneChangeTraj(string state, double lastPathSize, co
         getVehicleBehind(otherVehicles, new_lane, vehicle_behind_new_lane)) {
         //std::cout << "Lane occupied. Stay on current lane" << std::endl;
         vector<double> old_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, this->current_lane);
-        new_trajectory.velocity = old_lane_vel_acc[0];
-        new_trajectory.acceleration = old_lane_vel_acc[1];
-        new_trajectory.lane = this->current_lane;
+        new_trajectory.velocity = 0.0;
+        new_trajectory.acceleration = 0.0;
+        new_trajectory.intended_lane = new_lane;
+        new_trajectory.final_lane = this->current_lane;
     }
     else {
         //std::cout << "Changing to new lane" << std::endl;
         vector<double> new_lane_vel_acc = getKinematicsOfLane(lastPathSize, otherVehicles, new_lane);
         new_trajectory.velocity = new_lane_vel_acc[0];
         new_trajectory.acceleration = new_lane_vel_acc[1];
-        new_trajectory.lane = new_lane;
+        new_trajectory.intended_lane = new_lane;
+        new_trajectory.final_lane = new_lane;
     }
+    new_trajectory.end_s = this->current_pos_s + static_cast<double>(50 - lastPathSize)*0.02*new_trajectory.velocity;
     return new_trajectory;   
 }
 
@@ -683,4 +680,151 @@ vector<string> ego_vehicle::possibleNextStates() {
         next_states.push_back("LCR");
     }
     return next_states;
+}
+
+
+// Method that determines the average speed of a given lane. For that, it uses the speed of the vehicles 
+// until 100 meters ahead and until 10 meters behind the ego vehicle
+double ego_vehicle::getLaneAvgSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane) {
+    double car_real_pos_s = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
+    
+    double horizon_s_ahead = car_real_pos_s + 100.0;
+    double horizon_s_behind = car_real_pos_s - 10.0;
+    unsigned int car_counter = 0;
+    double average_speed = 0.0;
+
+    double lane_right_border = 2.0 + 4.0*static_cast<double>(lane) - 2.0;
+    double lane_left_border =  2.0 + 4.0*static_cast<double>(lane) + 2.0;
+    
+    for (unsigned int i = 0; i < otherVehicles.size(); i++) {
+        double other_vehicle_d = otherVehicles[i][6];
+        double other_vehicle_s = otherVehicles[i][5];
+        double other_vehicle_vel = sqrt(pow(otherVehicles[i][3],2) + pow(otherVehicles[i][4],2));
+        if ((other_vehicle_d > lane_right_border) && (other_vehicle_d < lane_left_border)) {
+            if ((other_vehicle_s > horizon_s_behind) && (other_vehicle_s < horizon_s_ahead)) {
+                average_speed += other_vehicle_vel;
+                car_counter++;
+            }
+        }
+    }
+    if (car_counter != 0) {
+        average_speed = average_speed/static_cast<double>(car_counter);
+    }
+    else {
+        average_speed = this->target_speed_xy;
+    }
+    return average_speed;
+}
+
+// Function that determines the speed of the closest car ahead on the given lane.
+double ego_vehicle::getNextCarOnLaneSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane) {
+    double car_real_pos_s = this->current_pos_s - 50.0*0.02*this->current_speed_xy;
+    
+    double min_s_distance = this->current_pos_s + 300.0;
+
+    double lane_right_border = 2.0 + 4.0*static_cast<double>(lane) - 2.0;
+    double lane_left_border =  2.0 + 4.0*static_cast<double>(lane) + 2.0;
+
+    double next_car_speed = -100.0;
+    
+    for (unsigned int i = 0; i < otherVehicles.size(); i++) {
+        double other_vehicle_d = otherVehicles[i][6];
+        double other_vehicle_s = otherVehicles[i][5];
+        double other_vehicle_vel = sqrt(pow(otherVehicles[i][3],2) + pow(otherVehicles[i][4],2));
+        if ((other_vehicle_d > lane_right_border) && (other_vehicle_d < lane_left_border)) {
+            if ((other_vehicle_s > car_real_pos_s) && (other_vehicle_s < min_s_distance)) {
+                if (other_vehicle_s < min_s_distance) {
+                    next_car_speed = other_vehicle_vel;
+                    min_s_distance = other_vehicle_s;
+                }
+            }
+        }
+    }
+    return next_car_speed;
+}
+
+// Gets a cost based on the average speed of the intended lane and the final lanes. If the speed of the intended
+// and/or the final lane are smaller than the target speed, a higher cost is returned.
+double ego_vehicle::avgLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles) {
+    double speed_intended_lane = getLaneAvgSpeed(otherVehicles, trajectory.intended_lane);
+    double speed_final_lane = getLaneAvgSpeed(otherVehicles, trajectory.final_lane);
+
+    double cost = (2.0*(this->target_speed_xy) - speed_intended_lane - speed_final_lane)/(this->target_speed_xy);
+
+    return cost;
+}
+
+// Gets a cost based on the speed of the closest vehicle ahead on the intended and final lanes. If there is not a car
+// close at one of those lanes, their speed is replaced by the target speed. If there is a slow car at the intended or 
+// the final lane, the cost will be higher.
+double ego_vehicle::NextCarOnLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles) {
+    double speed_intended_lane = getNextCarOnLaneSpeed(otherVehicles, trajectory.intended_lane);
+    if (speed_intended_lane < -50.0) {
+        speed_intended_lane = this->target_speed_xy;
+    }
+    double speed_final_lane = getNextCarOnLaneSpeed(otherVehicles, trajectory.final_lane);
+    if (speed_final_lane < -50.0) {
+        speed_final_lane = this->target_speed_xy;
+    }
+
+    double cost = (2.0*this->target_speed_xy - speed_intended_lane - speed_final_lane)/(this->target_speed_xy);
+
+    return cost;
+}
+
+// This method takes all the cost function results multiplied by their weights and sums them up to get the
+// total cost.
+double ego_vehicle::getTotalCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles) {
+    double total_cost = 0.0;
+
+    // Add here other cost functions and their weights
+    vector<costFunction_ego> cost_functions {&ego_vehicle::avgLaneSpeedCost, &ego_vehicle::NextCarOnLaneSpeedCost};
+    vector<double> weights {WEIGHT_AVG_LANE_SPEED, WEIGHT_NEXT_CAR_ON_LANE_SPEED};
+
+    for (unsigned int i = 0; i < cost_functions.size(); i++) {
+        total_cost += weights[i]*(this->*cost_functions[i])(trajectory, otherVehicles);
+    }
+
+    return total_cost;
+
+}
+
+// This method selects the new FSM state from the reachable states from the current FSM state
+// The selection is according the state with the smaller cost. The method returns the trajectory
+// associated with the state selected and also changes the internal variable "current_FSM_state" 
+trajectoryInfo ego_vehicle::chooseNewState(double lastPathSize, const vector<vector<double>> &otherVehicles) {
+    // Only considers states which can be reached from current FSM state
+    vector<string> possible_next_states = possibleNextStates();
+    // This vector has the values of the costs for every next state
+    vector<double> state_costs;
+    vector<trajectoryInfo> state_trajectories;
+
+    for(unsigned int i = 0; i < possible_next_states.size(); i++) {
+        // Gets the trajectory for this state
+        trajectoryInfo next_state_trajectory = generateStateTraj(possible_next_states[i], lastPathSize, otherVehicles);
+
+        // Calculates the cost for this trajectory
+        double next_state_cost = getTotalCost(next_state_trajectory, otherVehicles);
+
+        state_costs.push_back(next_state_cost);
+        state_trajectories.push_back(next_state_trajectory);
+    }
+
+
+    // Finds the minimum cost state
+    double min_cost = 9999999;
+    unsigned int next_state_selected_index;
+
+    for (unsigned int i = 0; i < possible_next_states.size(); i++) {
+        if (state_costs[i] < min_cost) {
+            next_state_selected_index = i;
+            min_cost = state_costs[i];
+        }
+    }
+
+    // Prints to the console the new state
+    std::cout << "Next state: " << possible_next_states[next_state_selected_index] << std::endl;
+    // Updates the FSM state on the 
+    this->current_FSM_state = possible_next_states[next_state_selected_index];
+    return state_trajectories[next_state_selected_index];
 }
