@@ -41,7 +41,7 @@ class ego_vehicle {
         const vector<double> &mapsS, const vector<double> &mapsX, const vector<double> &mapsY);
 
     void updateTrajectory(const vector<double> &previousXpoints, double s0, double endPathS, const vector<vector<double>> &otherCars);
-    
+
     vector<vector<double>> trajXYToFrenet(const vector<double> &xPoints, const vector<double> &yPoints, 
         const vector<double> &thPoints, const vector<double> &mapsX, const vector<double> &mapsY);
     
@@ -69,14 +69,18 @@ class ego_vehicle {
     vector<string> possibleNextStates();
     
     // Cost functions
-    double avgLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
-    double NextCarOnLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
-    double getLaneAvgSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane);
-    double getNextCarOnLaneSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane);
-    double getTotalCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
+    double avgLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles); //
+    double NextCarOnLaneSpeedCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles); //
+    double NextCarOnLaneDistCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles); 
+    double distFromFastestLaneCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles);
+    double laneChangeWhenSlowCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles); 
+    double getLaneAvgSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane); //
+    double getNextCarOnLaneSpeed(const vector<vector<double>> &otherVehicles, unsigned int lane); //
+    double getNextCarOnLaneDist(const vector<vector<double>> &otherVehicles, unsigned int lane);
+    double getTotalCost(trajectoryInfo trajectory, const vector<vector<double>> &otherVehicles, bool verbose);
 
     // Select new FSM state and returns the corresponding trajectory
-    trajectoryInfo chooseNewState(double lastPathSize, const vector<vector<double>> &otherVehicles);
+    trajectoryInfo chooseNewState(double lastPathSize, const vector<vector<double>> &otherVehicles, bool verbose);
 
 
   private:
@@ -98,13 +102,18 @@ class ego_vehicle {
     const double DESIRED_ACC = 1.0;
     const double DESIRED_JERK = 2.0;
     const double DISTANCE_BUFFER = 30.0;
-    const double SEARCH_RANGE = 20.0;
+    const double SEARCH_RANGE = 10.0;
+
+    const double LANE_WIDTH = 4.0;
 
     const double MAX_ACCEL = 10.0;
     const double MAX_JERK = 10.0;
 
-    const double WEIGHT_AVG_LANE_SPEED = 500.0;
-    const double WEIGHT_NEXT_CAR_ON_LANE_SPEED = 600.0;
+    const double WEIGHT_AVG_LANE_SPEED = 1500.0;
+    const double WEIGHT_NEXT_CAR_ON_LANE_SPEED = 500.0;
+    const double WEIGHT_NEXT_CAR_ON_LANE_DIST = 500.0;
+    const double WEIGHT_DIST_FASTEST_LANE = 1400.0;
+    const double WEIGHT_LANE_CHANGE_WHEN_SLOW = 900.0;
 
     unsigned int lanes_quantity;
 
@@ -122,8 +131,13 @@ class ego_vehicle {
     double target_acc_xy;
     double current_acc_xy;
 
-    std::map<string, int> lane_direction = {{"PLCL", -1}, {"LCL", -1}, 
-                                            {"LCR", 1}, {"PLCR", 1}};
+    std::map<string, int> lane_direction = {{"PLCL1", -1}, {"PLCR1", 1}, 
+                                            {"LCL", -1}, {"LCR", 1},
+                                            {"PLCL2", -1}, {"PLCR2", 1},
+                                            {"PLCL3", -1}, {"PLCR3", 1},
+                                            {"PLCL4", -1}, {"PLCR4", 1},
+                                            {"PLCL5", -1}, {"PLCR5", 1},
+                                            };
 
     string current_FSM_state;   
 
