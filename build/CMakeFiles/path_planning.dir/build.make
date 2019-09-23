@@ -60,54 +60,54 @@ include CMakeFiles/path_planning.dir/flags.make
 CMakeFiles/path_planning.dir/src/main.cpp.o: CMakeFiles/path_planning.dir/flags.make
 CMakeFiles/path_planning.dir/src/main.cpp.o: ../src/main.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/path_planning.dir/src/main.cpp.o"
-	/usr/bin/g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/main.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/main.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp
 
 CMakeFiles/path_planning.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/path_planning.dir/src/main.cpp.i"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp > CMakeFiles/path_planning.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp > CMakeFiles/path_planning.dir/src/main.cpp.i
 
 CMakeFiles/path_planning.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/path_planning.dir/src/main.cpp.s"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp -o CMakeFiles/path_planning.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/main.cpp -o CMakeFiles/path_planning.dir/src/main.cpp.s
 
 CMakeFiles/path_planning.dir/src/PTG.cpp.o: CMakeFiles/path_planning.dir/flags.make
 CMakeFiles/path_planning.dir/src/PTG.cpp.o: ../src/PTG.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/path_planning.dir/src/PTG.cpp.o"
-	/usr/bin/g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/PTG.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/PTG.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp
 
 CMakeFiles/path_planning.dir/src/PTG.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/path_planning.dir/src/PTG.cpp.i"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp > CMakeFiles/path_planning.dir/src/PTG.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp > CMakeFiles/path_planning.dir/src/PTG.cpp.i
 
 CMakeFiles/path_planning.dir/src/PTG.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/path_planning.dir/src/PTG.cpp.s"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp -o CMakeFiles/path_planning.dir/src/PTG.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/PTG.cpp -o CMakeFiles/path_planning.dir/src/PTG.cpp.s
 
 CMakeFiles/path_planning.dir/src/vehicle.cpp.o: CMakeFiles/path_planning.dir/flags.make
 CMakeFiles/path_planning.dir/src/vehicle.cpp.o: ../src/vehicle.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/path_planning.dir/src/vehicle.cpp.o"
-	/usr/bin/g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/vehicle.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/vehicle.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp
 
 CMakeFiles/path_planning.dir/src/vehicle.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/path_planning.dir/src/vehicle.cpp.i"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp > CMakeFiles/path_planning.dir/src/vehicle.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp > CMakeFiles/path_planning.dir/src/vehicle.cpp.i
 
 CMakeFiles/path_planning.dir/src/vehicle.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/path_planning.dir/src/vehicle.cpp.s"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp -o CMakeFiles/path_planning.dir/src/vehicle.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/vehicle.cpp -o CMakeFiles/path_planning.dir/src/vehicle.cpp.s
 
 CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o: CMakeFiles/path_planning.dir/flags.make
 CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o: ../src/ego_vehicle.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o"
-	/usr/bin/g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.o -c /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp
 
 CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.i"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp > CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp > CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.i
 
 CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.s"
-	/usr/bin/g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp -o CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/data/Udacity/Self_driving_car_engineer/Project7/My_Project/src/ego_vehicle.cpp -o CMakeFiles/path_planning.dir/src/ego_vehicle.cpp.s
 
 # Object files for target path_planning
 path_planning_OBJECTS = \
