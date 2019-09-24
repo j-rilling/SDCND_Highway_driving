@@ -6,11 +6,11 @@ This project consists of a behavior and trajectory planner capable of driving a 
 
 This software is programmed in C++11 using the standard template library.
 
-The software uses a mix between cartesian and [Frenet coordinates](https://en.wikipedia.org/wiki/Frenet%E2%80%93Serret_formulas) in order to make the calculations easier. For those transformations, the file ./data/map_data.txt is readed by the software. The software works together with the [ Udacity term 3 simulator ](https://github.com/udacity/self-driving-car-sim) which sends the position on xy, the velocities on xy and the positions on sd of the controlled vehicle as well as of the other cars and receives a vector of points that it executes sequentially to move the controlled vehicle on the simulator. It also sends two vectors corresponding to the control points that were sent to the simulator but were still not executed since the simulator and this software are not syncronized.  To communicate this software with the simulator the [uWebSockets API](https://github.com/uNetworking/uWebSockets) is used. 
+The software uses a mix between cartesian and [Frenet coordinates](https://en.wikipedia.org/wiki/Frenet%E2%80%93Serret_formulas) in order to make the calculations easier. For those transformations, the file ./data/map_data.txt is readed by the software. The software works together with the [ Udacity term 3 simulator ](https://github.com/udacity/self-driving-car-sim) which sends the position on XY, the velocities on XY and the positions on SD (Frenet) of the controlled vehicle as well as of the other cars and receives a vector of points (C++ type vector) that it executes sequentially to move the controlled vehicle on the simulator. It also sends two vectors corresponding to the control points that were sent to the simulator but were still not executed since the simulator and this software are not syncronized.  To communicate this software with the simulator the [uWebSockets API](https://github.com/uNetworking/uWebSockets) is used. 
 
 To compile the software, GCC 7.4.0 and CMake 3.15.0-rc1 is used.
 
-The purpose of this software is to implement a highway behavior planner which generates optimal trajectories with minimized jerk. That being said, the project can be separated in two modules which work together in order to get the final result. These modules will be called from here on "Behavior planner" and "Trajectory generator". Both modules are part of the class "ego_vehicle".  
+The purpose of this software is to implement a highway behavior planner which generates optimal trajectories with minimized jerk. With that being said, the project can be separated in two modules which work together in order to get the final result. These modules will be called from here on "Behavior planner" and "Trajectory generator". Both modules are part of the class "ego_vehicle".  
 
 ### About the trajectory generator
 The trajectory generator performs the following tasks:
@@ -25,17 +25,22 @@ It is important to mention that no start or final position is used here, since f
 ##### Trajectory data generation for keeping lane
 This is performed by the "keepLaneTraj" and consists of observing the velocity and position of other cars on the current lane and changing the velocity and acceleration of the ego vehicle so it keeps the lane without hitting another car. In order to determine the velocity and acceleration the ego vehicle should take, the method "getKinematicsOfLane" is used on the current lane of the ego vehicle. This method determines the optimal velocity and acceleration of the ego vehicle for this cycle on a given lane. In order to avoid hitting a vehicle ahead of the ego vehicle, the maximal velocity is calculated as:
 
-$$ v_{maxOnFront} = (s_{vah} - s_{ego} + db) + v_{vah} - 0.5 a_{ego}       (1) $$ 
+<a href="https://www.codecogs.com/eqnedit.php?latex=$$&space;v_{maxOnFront}&space;=&space;(s_{vah}&space;-&space;s_{ego}&space;&plus;&space;db)&space;&plus;&space;v_{vah}&space;-&space;0.5&space;a_{ego}&space;(1)&space;$$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?$$&space;v_{maxOnFront}&space;=&space;(s_{vah}&space;-&space;s_{ego}&space;&plus;&space;db)&space;&plus;&space;v_{vah}&space;-&space;0.5&space;a_{ego}&space;(1)&space;$$" title="$$ v_{maxOnFront} = (s_{vah} - s_{ego} + db) + v_{vah} - 0.5 a_{ego} (1) $$" /></a>
 
 Where:
-$ v_{maxOnFront} $ : Maximum speed in order to not hit car on front
-$ s_{vah} $ : Position s (Frenet) of closest vehicle on front to ego vehicle (m)
-$ s_{ego} $ : Position s of ego vehicle (m)
-$ db $ : Distance buffer between ego vehicle and closest vehicle (m)
-$ v_{vah} $ : Velocity on s of closest vehicle on front to ego vehicle (m/s)
-$ a_{ego} $ : Acceleration s of ego vehicle (m/s^2)
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;v_{maxOnFront}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;v_{maxOnFront}&space;$" title="$ v_{maxOnFront} $" /></a> : Maximum speed in order to not hit car on front.
 
-If $ v_{maxOnFront} $ is higher than either the target speed (speed limit) or the speed with acceleration limit, or if there is not a vehicle in front of the ego vehicle, the minimum of them is selected as the velocity of the lane. The acceleration is calculated simply as the subtraction between the recently calculated new velocity of the ego vehicle and its current velocity.
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;s_{vah}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;s_{vah}&space;$" title="$ s_{vah} $" /></a> : Position s (Frenet) of closest vehicle on front to ego vehicle (m)
+
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;s_{ego}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;s_{ego}&space;$" title="$ s_{ego} $" /></a> : Position s of ego vehicle (m).
+
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;db&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;db&space;$" title="$ db $" /></a> : Distance buffer between ego vehicle and closest vehicle (m).
+
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;v_{vah}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;v_{vah}&space;$" title="$ v_{vah} $" /></a> : Velocity on s of closest vehicle on front to ego vehicle (m/s).
+
+- <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;a_{ego}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;a_{ego}&space;$" title="$ a_{ego} $" /></a> : Acceleration s of ego vehicle (m/s^2).
+
+If <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;$&space;v_{maxOnFront}&space;$" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;$&space;v_{maxOnFront}&space;$" title="$ v_{maxOnFront} $" /></a> is higher than either the target speed (speed limit) or the speed with acceleration limit, or if there is not a vehicle in front of the ego vehicle, the minimum of them is selected as the velocity of the lane. The acceleration is calculated simply as the subtraction between the recently calculated new velocity of the ego vehicle and its current velocity.
 
 ##### Trajectory data generation for preparing to change lane
 First of all, here two concepts need to be defined, "intended lane" and "final lane". Intended lane is the lane the ego vehicle should take at the end of the changing lane process, so, in case of this state corresponds to the lane is wanted to change to. Final lane is the lane the ego vehicle will have at the end of this state, in this case, it will be the same lane where it is now.
