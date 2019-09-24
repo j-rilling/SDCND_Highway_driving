@@ -195,9 +195,11 @@ void ego_vehicle::updateTrajectory(const vector<double> &previousXpoints, double
         this->current_pos_s = s0;
     }
     
+    // Lane and state update
     trajectoryInfo new_trajectory = chooseNewState(last_path_size, otherCars, true);
     this->current_lane = new_trajectory.final_lane;
 
+    // Acceleration update
     if (this->current_acc_xy < new_trajectory.acceleration) {
         this->current_acc_xy += 15.0*TIME_STEP;
     }
@@ -205,6 +207,7 @@ void ego_vehicle::updateTrajectory(const vector<double> &previousXpoints, double
         this->current_acc_xy -= 15.0*TIME_STEP;
     }
 
+    // Speed update
     if (this->current_speed_xy < new_trajectory.velocity) {
         this->current_speed_xy += abs(this->current_acc_xy)*TIME_STEP;
     }

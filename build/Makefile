@@ -123,33 +123,6 @@ path_planning/fast:
 	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/build
 .PHONY : path_planning/fast
 
-src/PTG.o: src/PTG.cpp.o
-
-.PHONY : src/PTG.o
-
-# target to build an object file
-src/PTG.cpp.o:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/PTG.cpp.o
-.PHONY : src/PTG.cpp.o
-
-src/PTG.i: src/PTG.cpp.i
-
-.PHONY : src/PTG.i
-
-# target to preprocess a source file
-src/PTG.cpp.i:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/PTG.cpp.i
-.PHONY : src/PTG.cpp.i
-
-src/PTG.s: src/PTG.cpp.s
-
-.PHONY : src/PTG.s
-
-# target to generate assembly for a file
-src/PTG.cpp.s:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/PTG.cpp.s
-.PHONY : src/PTG.cpp.s
-
 src/ego_vehicle.o: src/ego_vehicle.cpp.o
 
 .PHONY : src/ego_vehicle.o
@@ -204,33 +177,6 @@ src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/vehicle.o: src/vehicle.cpp.o
-
-.PHONY : src/vehicle.o
-
-# target to build an object file
-src/vehicle.cpp.o:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/vehicle.cpp.o
-.PHONY : src/vehicle.cpp.o
-
-src/vehicle.i: src/vehicle.cpp.i
-
-.PHONY : src/vehicle.i
-
-# target to preprocess a source file
-src/vehicle.cpp.i:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/vehicle.cpp.i
-.PHONY : src/vehicle.cpp.i
-
-src/vehicle.s: src/vehicle.cpp.s
-
-.PHONY : src/vehicle.s
-
-# target to generate assembly for a file
-src/vehicle.cpp.s:
-	$(MAKE) -f CMakeFiles/path_planning.dir/build.make CMakeFiles/path_planning.dir/src/vehicle.cpp.s
-.PHONY : src/vehicle.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -240,18 +186,12 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... path_planning"
 	@echo "... edit_cache"
-	@echo "... src/PTG.o"
-	@echo "... src/PTG.i"
-	@echo "... src/PTG.s"
 	@echo "... src/ego_vehicle.o"
 	@echo "... src/ego_vehicle.i"
 	@echo "... src/ego_vehicle.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/vehicle.o"
-	@echo "... src/vehicle.i"
-	@echo "... src/vehicle.s"
 .PHONY : help
 
 

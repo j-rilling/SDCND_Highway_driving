@@ -1,51 +1,18 @@
 #include <uWS/uWS.h>
-#include <fstream>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "helpers.h"
 #include "json.hpp"
-#include "PTG.h"
 #include "ego_vehicle.h"
 
 // for convenience
 using nlohmann::json;
 using std::string;
 using std::vector;
-
-void writeToCSV (double first, double second, double third, double fourth) {
-  std::ofstream outputFile;
-  std::string filename = "log.csv";
-  outputFile.open(filename.c_str(), std::ios::out | std::ios::app);
-  if (outputFile.fail()){
-    std::cout << "Log failed to open" << std::endl;
-  }
-  outputFile << first << " " << second << " " << third << " " << fourth << std::endl;
-  outputFile.close();
-}
-
-vector<vector<double>> readFromCSV () {
-  vector <double> x_values;
-  vector <double> y_values;
-
-  std::ifstream inputFile;
-  std::string filename = "log.csv";
-  inputFile.open(filename.c_str(), std::ifstream::in);
-  string line;
-  while (getline(inputFile, line)) {
-    std::istringstream iss(line);
-    double x;
-    double y;
-    iss >> x;
-    iss >> y;
-    x_values.push_back(x);
-    y_values.push_back(y);
-  }
-  inputFile.close();
-  return {x_values, y_values};
-}
 
 int main() {
   uWS::Hub h;
@@ -113,10 +80,6 @@ int main() {
           double car_d = j[1]["d"];
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
-
-          writeToCSV(car_x, car_y, car_yaw, car_speed);
-
-
 
           // Previous path data given to the Planner
           vector<double> previous_path_x = j[1]["previous_path_x"];

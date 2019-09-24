@@ -1,8 +1,8 @@
 #ifndef _EGO_VEHICLE_H_
 #define _EGO_VEHICLE_H_
 
-#include "PTG.h"
 #include "helpers.h"
+#include <iostream>
 #include <vector>
 #include <map>
 #include <cmath>
